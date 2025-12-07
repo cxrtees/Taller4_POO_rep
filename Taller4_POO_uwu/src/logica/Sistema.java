@@ -21,6 +21,12 @@ public class Sistema {
 	private ArrayList<AsignaturaCertificacion> asignaturasCertificaciones = new ArrayList<>();
 	
 	public Sistema() {}
+	
+	// lectura de archivos
+	public void cargarUsuarios() {}
+	public void cargarCertficaciones() {}
+	public void cargarEstudiantes() {}
+	public void cargarCursos() {}
 
 	public ArrayList<Usuario> getUsuarios() {return usuarios;}
 
