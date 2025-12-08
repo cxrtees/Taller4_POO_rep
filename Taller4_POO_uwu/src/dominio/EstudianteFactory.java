@@ -1,7 +1,8 @@
 package dominio;
 
 public class EstudianteFactory {
-	// Crea un Usuario a partir de una línea del archivo usuarios.txt
+	
+	// Crea un Estudiante a partir de una línea del archivo usuarios.txt
 	public static Estudiante crearDesdeLinea(String linea) {
 		String[] p = linea.split(";");
 			

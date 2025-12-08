@@ -110,16 +110,7 @@ public class Sistema implements SistemaIn {
                 String linea = sc.nextLine().trim();
                 if (linea.isEmpty()) continue;
 
-                String[] p = linea.split(";");
-             
-                String nrc        = p[0].trim();
-                String nombre     = p[1].trim();
-                int semestre      = Integer.parseInt(p[2].trim());
-                int creditos      = Integer.parseInt(p[3].trim());
-                String area       = p[4].trim();
-                String prereqText = (p.length > 5) ? p[5].trim() : "";
-
-                Curso c = new Curso(nrc, nombre, semestre, creditos, area, prereqText);
+                Curso c = CursoFactory.crearDesdeLinea(linea);
                 cursos.add(c);
             }
 
