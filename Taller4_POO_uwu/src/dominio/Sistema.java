@@ -7,7 +7,21 @@ import java.util.Scanner;
 import logica.SistemaIn;
 
 public class Sistema implements SistemaIn {
-
+	
+	// SINGLETON
+	private static Sistema instancia;
+	
+	// constructor priv para que nadie pueda hacer un "new Sistema()" desde fuera
+	private Sistema() {}	
+	
+	// método estático de acceso global 
+	public static Sistema getInstancia() {
+		if (instancia == null) {
+			instancia = new Sistema();
+		}
+		return instancia;
+	}
+	
     // Rutas a los archivos de texto
     private static final String RUTA_USUARIOS        = "usuarios.txt";
     private static final String RUTA_ESTUDIANTES     = "estudiantes.txt";
@@ -26,8 +40,6 @@ public class Sistema implements SistemaIn {
     private ArrayList<Nota> notas = new ArrayList<>();
     private ArrayList<AsignaturaCertificacion> asignaturasCertificaciones = new ArrayList<>();
 
-    public Sistema() { }
-    //   MÉTODO PRINCIPAL SISTEMA
     @Override
     public void iniciarSistema() {
 
