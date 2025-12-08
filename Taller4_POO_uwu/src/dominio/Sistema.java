@@ -68,15 +68,7 @@ public class Sistema implements SistemaIn {
                 String linea = sc.nextLine().trim();
                 if (linea.isEmpty()) continue;
 
-                String[] p = linea.split(";");
-            
-                String nombreUsuario = p[0].trim();
-                String contrasena    = p[1].trim();
-                String rol           = p[2].trim();
-                String infoExtra     = (p.length > 3) ? p[3].trim() : "";
-
-               
-                Usuario u = new Usuario(nombreUsuario, contrasena, rol, infoExtra);
+                Usuario u = UsuarioFactory.crearDesdeLinea(linea);
                 usuarios.add(u);
             }
 
@@ -96,17 +88,8 @@ public class Sistema implements SistemaIn {
             while (sc.hasNextLine()) {
                 String linea = sc.nextLine().trim();
                 if (linea.isEmpty()) continue;
-
-                String[] p = linea.split(";");
-                // RUT;Nombre;Carrera;Semestre;Correo;Contraseña
-                String rut       = p[0].trim();
-                String nombre    = p[1].trim();
-                String carrera   = p[2].trim();
-                int semestre     = Integer.parseInt(p[3].trim());
-                String correo    = p[4].trim();
-                String pass      = p[5].trim();
-
-                Estudiante e = new Estudiante(rut, nombre, carrera, semestre, correo, pass);
+                
+                Estudiante e = EstudianteFactory.crearDesdeLinea(linea);
                 estudiantes.add(e);
             }
 
