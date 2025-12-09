@@ -303,9 +303,7 @@ public class Menu {
         return null;
     }
 
-    // ============================================================
-    //                         COORDINADOR
-    // ============================================================
+ 
  // ================== COORDINADOR ==================
     private void vistaCoordinador(JTabbedPane tabs) {
         JPanel panelCoord = new JPanel(new BorderLayout(10, 10));
@@ -488,7 +486,7 @@ public class Menu {
                 sb.append("(No hay asignaturas críticas definidas)");
             } else {
                 for (Curso c : criticas) {
-                    sb.append("• ").append(c.getNrc())
+                    sb.append("• ").append(c.getNcr())
                       .append(" - ").append(c.getNombre()).append("\n");
                 }
             }
@@ -572,28 +570,30 @@ public class Menu {
     //                         ESTUDIANTE
     // ============================================================
     private void vistaEstudiante(JTabbedPane tabs) {
-        JPanel panelEst = new JPanel(new BorderLayout(10, 10));
-        panelEst.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel root = new JPanel(new BorderLayout(10, 10));
+        root.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Panel superior: ingresar RUT
+        // --------- ARRIBA: RUT + botón Cargar (común a todas las subtabs) ----------
         JPanel panelRut = new JPanel(new FlowLayout());
         JLabel lblRut = new JLabel("RUT estudiante:");
         JTextField txtRut = new JTextField(15);
         JButton btnCargar = new JButton("Cargar datos");
-
         panelRut.add(lblRut);
         panelRut.add(txtRut);
         panelRut.add(btnCargar);
+        root.add(panelRut, BorderLayout.NORTH);
 
-        panelEst.add(panelRut, BorderLayout.NORTH);
+        // --------- CENTRO: subtabs ---------
+        JTabbedPane subTabs = new JTabbedPane();
+        root.add(subTabs, BorderLayout.CENTER);
 
-        // Panel centro: perfil + notas
-        JPanel panelCentro = new JPanel(new BorderLayout(5, 5));
+        // ============ 1) PERFIL Y MALLA ============
+        JPanel panelPerfilMalla = new JPanel(new BorderLayout(5, 5));
 
         // Perfil
         JPanel panelPerfil = new JPanel();
         panelPerfil.setLayout(new BoxLayout(panelPerfil, BoxLayout.Y_AXIS));
-        panelPerfil.setBorder(BorderFactory.createTitledBorder("Perfil"));
+        panelPerfil.setBorder(BorderFactory.createTitledBorder("Perfil del estudiante"));
 
         JLabel lblNombre = new JLabel("Nombre: ");
         JLabel lblCarrera = new JLabel("Carrera: ");
@@ -605,42 +605,89 @@ public class Menu {
         panelPerfil.add(lblSemestre);
         panelPerfil.add(lblCorreo);
 
-        // Notas
-        JPanel panelNotas = new JPanel(new BorderLayout());
-        panelNotas.setBorder(BorderFactory.createTitledBorder("Notas"));
+        // Malla (tabla)
+        JPanel panelMalla = new JPanel(new BorderLayout());
+        panelMalla.setBorder(BorderFactory.createTitledBorder("Malla curricular"));
 
-        String[] colNotas = {"Asignatura", "Nota", "Estado", "Semestre"};
-        JTable tablaNotas = new JTable();
-        DefaultTableModel modeloNotas = new DefaultTableModel(colNotas, 0) {
+        String[] colMalla = {"Código/NRC", "Nombre asignatura", "Semestre", "Créditos", "Estado"};
+        DefaultTableModel modeloMalla = new DefaultTableModel(colMalla, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
-        tablaNotas.setModel(modeloNotas);
-        JScrollPane scrollNotas = new JScrollPane(tablaNotas);
-        panelNotas.add(scrollNotas, BorderLayout.CENTER);
+        JTable tablaMalla = new JTable(modeloMalla);
+        // renderer para colorear por estado
+        tablaMalla.setDefaultRenderer(Object.class,
+                new EstadoAsignaturaRenderer(colMalla.length - 1)); // última col = Estado
 
-        panelCentro.add(panelPerfil, BorderLayout.WEST);
-        panelCentro.add(panelNotas, BorderLayout.CENTER);
+        JScrollPane scrollMalla = new JScrollPane(tablaMalla);
+        panelMalla.add(scrollMalla, BorderLayout.CENTER);
 
-        panelEst.add(panelCentro, BorderLayout.CENTER);
-
-        // Panel inferior: promedios
-        JPanel panelInferior = new JPanel(new FlowLayout());
+        // Panel inferior: botones de promedio
+        JPanel panelPromedios = new JPanel(new FlowLayout());
         JButton btnPromGeneral = new JButton("Promedio general");
         JButton btnPromSemestre = new JButton("Promedio por semestre");
+        panelPromedios.add(btnPromGeneral);
+        panelPromedios.add(btnPromSemestre);
 
-        panelInferior.add(btnPromGeneral);
-        panelInferior.add(btnPromSemestre);
+        panelMalla.add(panelPromedios, BorderLayout.SOUTH);
 
-        panelEst.add(panelInferior, BorderLayout.SOUTH);
+        panelPerfilMalla.add(panelPerfil, BorderLayout.WEST);
+        panelPerfilMalla.add(panelMalla, BorderLayout.CENTER);
 
-        // ------------ ACCIONES --------------
+        subTabs.addTab("Perfil y malla", panelPerfilMalla);
+
+        // ============ 2) INSCRIPCIÓN CERTIFICACIONES ============
+        JPanel panelInscripcion = new JPanel(new BorderLayout(5, 5));
+        panelInscripcion.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        JTextArea areaCerts = new JTextArea();
+        areaCerts.setEditable(false);
+        areaCerts.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JScrollPane scrollCerts = new JScrollPane(areaCerts);
+        scrollCerts.setBorder(BorderFactory.createTitledBorder("Líneas / certificaciones disponibles"));
+
+        JPanel panelInsBotones = new JPanel(new FlowLayout());
+        JButton btnListarLineas = new JButton("Listar líneas");
+        JButton btnVerRequisitos = new JButton("Mostrar requisitos");
+        JButton btnInscribir = new JButton("Inscribirse");
+        JButton btnVerificarReq = new JButton("Verificar requisitos");
+
+        panelInsBotones.add(btnListarLineas);
+        panelInsBotones.add(btnVerRequisitos);
+        panelInsBotones.add(btnInscribir);
+        panelInsBotones.add(btnVerificarReq);
+
+        panelInscripcion.add(scrollCerts, BorderLayout.CENTER);
+        panelInscripcion.add(panelInsBotones, BorderLayout.SOUTH);
+
+        subTabs.addTab("Inscripción certificaciones", panelInscripcion);
+
+        // ============ 3) SEGUIMIENTO ============
+        JPanel panelSeguimiento = new JPanel(new BorderLayout(5, 5));
+        JTextArea areaDash = new JTextArea();
+        areaDash.setEditable(false);
+        areaDash.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JScrollPane scrollDash = new JScrollPane(areaDash);
+        scrollDash.setBorder(BorderFactory.createTitledBorder("Dashboard de progreso"));
+
+        JPanel panelSegBotones = new JPanel(new FlowLayout());
+        JButton btnVerInscripciones = new JButton("Ver certificaciones inscritas");
+        panelSegBotones.add(btnVerInscripciones);
+
+        panelSeguimiento.add(scrollDash, BorderLayout.CENTER);
+        panelSeguimiento.add(panelSegBotones, BorderLayout.SOUTH);
+
+        subTabs.addTab("Seguimiento", panelSeguimiento);
+
+        // ======================== LISTENERS ========================
+
+        // Cargar Perfil + Malla (usa notas para saber estado)
         btnCargar.addActionListener(e -> {
             String rut = txtRut.getText().trim();
             if (rut.isEmpty()) {
-                JOptionPane.showMessageDialog(panelEst,
+                JOptionPane.showMessageDialog(root,
                         "Ingrese un RUT.",
                         "Atención",
                         JOptionPane.WARNING_MESSAGE);
@@ -649,7 +696,7 @@ public class Menu {
 
             Estudiante es = sistema.getEstudiante(rut);
             if (es == null) {
-                JOptionPane.showMessageDialog(panelEst,
+                JOptionPane.showMessageDialog(root,
                         "No se encontró estudiante con rut " + rut,
                         "Error",
                         JOptionPane.ERROR_MESSAGE);
@@ -661,78 +708,215 @@ public class Menu {
             lblSemestre.setText("Semestre: " + es.getSemestre());
             lblCorreo.setText("Correo: " + es.getCorreo());
 
-            // cargar notas
-            ArrayList<Nota> notas = sistema.getNotasEstudiante(rut);
-            modeloNotas.setRowCount(0); // limpiar
-            for (Nota n : notas) {
-                Object[] fila = {
-                        n.getCodigoAsignatura(),
-                        n.getCalificacion(),
-                        n.getEstado(),
-                        n.getSemestre()
-                };
-                modeloNotas.addRow(fila);
-            }
+            // Actualizar malla con colores según estado (Aprobada/Reprobada/Pendiente)
+            actualizarMallaParaRut(rut, modeloMalla);
         });
 
+        // Promedio general
         btnPromGeneral.addActionListener(e -> {
             String rut = txtRut.getText().trim();
             if (rut.isEmpty()) {
-                JOptionPane.showMessageDialog(panelEst,
+                JOptionPane.showMessageDialog(root,
                         "Ingrese un RUT y cargue datos primero.",
                         "Atención",
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
             double prom = sistema.calcularPromedioGeneral(rut);
-            JOptionPane.showMessageDialog(panelEst,
+            JOptionPane.showMessageDialog(root,
                     "Promedio general del estudiante: " + prom);
         });
 
+        // Promedio por semestre (con combo de números)
         btnPromSemestre.addActionListener(e -> {
             String rut = txtRut.getText().trim();
             if (rut.isEmpty()) {
-                JOptionPane.showMessageDialog(panelEst,
+                JOptionPane.showMessageDialog(root,
                         "Ingrese un RUT y cargue datos primero.",
                         "Atención",
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            String s = JOptionPane.showInputDialog(panelEst,
-                    "Ingrese semestre (número):");
-            if (s == null || s.trim().isEmpty()) return;
+            Integer[] opciones = {1,2,3,4,5,6,7,8,9,10};
+            Integer semestre = (Integer) JOptionPane.showInputDialog(
+                    root,
+                    "Seleccione semestre:",
+                    "Promedio por semestre",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    opciones,
+                    opciones[0]);
 
-            try {
-                int sem = Integer.parseInt(s.trim());
-                double prom = sistema.calcularPromedioSemestre(rut, sem);
-                JOptionPane.showMessageDialog(panelEst,
-                        "Promedio del semestre " + sem + ": " + prom);
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(panelEst,
-                        "Debe ser un número entero.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+            if (semestre == null) return;
+
+            double prom = sistema.calcularPromedioSemestre(rut, semestre);
+            JOptionPane.showMessageDialog(root,
+                    "Promedio del semestre " + semestre + ": " + prom);
+        });
+
+        // ---- INSCRIPCIÓN: listar líneas ----
+        btnListarLineas.addActionListener(e -> {
+            StringBuilder sb = new StringBuilder();
+            ArrayList<Certificacion> certs = sistema.getCertificaciones();
+            sb.append("Certificaciones disponibles:\n\n");
+            for (Certificacion c : certs) {
+                sb.append(c.getId()).append(" - ").append(c.getNombre()).append("\n");
+            }
+            if (certs.isEmpty()) {
+                sb.append("(No hay certificaciones)");
+            }
+            areaCerts.setText(sb.toString());
+        });
+
+        // Mostrar requisitos y descripción
+        btnVerRequisitos.addActionListener(e -> {
+            ArrayList<Certificacion> certs = sistema.getCertificaciones();
+            if (certs.isEmpty()) {
+                JOptionPane.showMessageDialog(root,
+                        "No hay certificaciones disponibles.",
+                        "Info", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            String[] opciones = new String[certs.size()];
+            for (int i = 0; i < certs.size(); i++) {
+                opciones[i] = certs.get(i).getId() + " - " + certs.get(i).getNombre();
+            }
+            String seleccion = (String) JOptionPane.showInputDialog(
+                    root,
+                    "Seleccione certificación:",
+                    "Requisitos",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    opciones,
+                    opciones[0]);
+            if (seleccion == null) return;
+            String idSel = seleccion.split(" - ")[0];
+            Certificacion c = sistema.buscarCertificacion(idSel);
+            if (c == null) return;
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("ID: ").append(c.getId()).append("\n");
+            sb.append("Nombre: ").append(c.getNombre()).append("\n\n");
+            sb.append("Descripción:\n").append(c.getDescripcion()).append("\n\n");
+            sb.append("Créditos requeridos: ").append(c.getCreditosRequeridos()).append("\n");
+            sb.append("Años de validez: ").append(c.getAñosValidez()).append("\n");
+
+            areaCerts.setText(sb.toString());
+        });
+
+        // Inscribirse
+        btnInscribir.addActionListener(e -> {
+            String rut = txtRut.getText().trim();
+            if (rut.isEmpty()) {
+                JOptionPane.showMessageDialog(root,
+                        "Ingrese un RUT primero.",
+                        "Atención",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            gestionarInscripcionCertificacion(rut, root);
+        });
+
+        // Verificar requisitos
+        btnVerificarReq.addActionListener(e -> {
+            String rut = txtRut.getText().trim();
+            if (rut.isEmpty()) {
+                JOptionPane.showMessageDialog(root,
+                        "Ingrese un RUT primero.",
+                        "Atención",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            ArrayList<Certificacion> certs = sistema.getCertificaciones();
+            if (certs.isEmpty()) {
+                JOptionPane.showMessageDialog(root,
+                        "No hay certificaciones disponibles.",
+                        "Info", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            String[] opciones = new String[certs.size()];
+            for (int i = 0; i < certs.size(); i++) {
+                opciones[i] = certs.get(i).getId() + " - " + certs.get(i).getNombre();
+            }
+            String seleccion = (String) JOptionPane.showInputDialog(
+                    root,
+                    "Seleccione certificación:",
+                    "Verificar requisitos",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    opciones,
+                    opciones[0]);
+            if (seleccion == null) return;
+            String idSel = seleccion.split(" - ")[0];
+
+            boolean cumple = sistema.verificarRequisitos(rut, idSel);
+            if (cumple) {
+                JOptionPane.showMessageDialog(root,
+                        "El estudiante CUMPLE los requisitos.",
+                        "Requisitos", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(root,
+                        "El estudiante NO cumple los requisitos.",
+                        "Requisitos", JOptionPane.WARNING_MESSAGE);
             }
         });
 
-        tabs.addTab("Estudiante", panelEst);
+        // Seguimiento: dashboard
+        btnVerInscripciones.addActionListener(e -> {
+            String rut = txtRut.getText().trim();
+            if (rut.isEmpty()) {
+                JOptionPane.showMessageDialog(root,
+                        "Ingrese un RUT primero.",
+                        "Atención",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            ArrayList<RegistroCertificacion> regs = sistema.getCertificacionesInscritas(rut);
+            StringBuilder sb = new StringBuilder();
+            sb.append("Dashboard de certificaciones del estudiante ").append(rut).append("\n\n");
+            if (regs.isEmpty()) {
+                sb.append("El estudiante no está inscrito en ninguna certificación.");
+            } else {
+                for (RegistroCertificacion r : regs) {
+                    Certificacion c = sistema.buscarCertificacion(r.getIdCertificacion());
+                    String nombreCert = (c != null) ? c.getNombre() : r.getIdCertificacion();
+                    sb.append("- ").append(nombreCert)
+                      .append(" (").append(r.getIdCertificacion()).append(")")
+                      .append(" | Estado: ").append(r.getEstado())
+                      .append(" | Progreso: ").append(r.getProgreso()).append("%\n");
+                }
+            }
+            areaDash.setText(sb.toString());
+        });
+
+        tabs.addTab("Estudiante", root);
     }
-    private void mostrarTextoEnDialogo(JPanel parent, String titulo, String contenido) {
-        javax.swing.JDialog dialog = new javax.swing.JDialog();
-        dialog.setTitle(titulo);
-        dialog.setSize(500, 400);
-        dialog.setLocationRelativeTo(parent);
-        dialog.setModal(true);
 
-        javax.swing.JTextArea area = new javax.swing.JTextArea(contenido);
-        area.setEditable(false);
-        area.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 12));
+    private void refrescarTablaCertificaciones(JTable tabla, String[] columnas) {
+        ArrayList<Certificacion> lista = sistema.getCertificaciones();
+        Object[][] datos = new Object[lista.size()][columnas.length];
 
-        javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(area);
-        dialog.add(scroll);
+        for (int i = 0; i < lista.size(); i++) {
+            Certificacion c = lista.get(i);
+            datos[i][0] = c.getId();
+            datos[i][1] = c.getNombre();
+            datos[i][2] = c.getDescripcion();
+            datos[i][3] = c.getCreditosRequeridos();
+            datos[i][4] = c.getAñosValidez();
+        }
 
-        dialog.setVisible(true);
+        javax.swing.table.DefaultTableModel modelo =
+                new javax.swing.table.DefaultTableModel(datos, columnas) {
+                    @Override
+                    public boolean isCellEditable(int row, int column) {
+                        return false;
+                    }
+                };
+
+        tabla.setModel(modelo);
+        tabla.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
     }
+
 
 }
