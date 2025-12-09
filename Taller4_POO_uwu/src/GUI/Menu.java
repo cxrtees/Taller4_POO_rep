@@ -306,6 +306,7 @@ public class Menu {
     // ============================================================
     //                         COORDINADOR
     // ============================================================
+ // ================== COORDINADOR ==================
     private void vistaCoordinador(JTabbedPane tabs) {
         JPanel panelCoord = new JPanel(new BorderLayout(10, 10));
         panelCoord.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -314,138 +315,258 @@ public class Menu {
         String[] columnas = {"ID", "Nombre", "Descripción", "Créditos req.", "Años validez"};
         JTable tablaCert = new JTable();
         refrescarTablaCertificaciones(tablaCert, columnas);
-
         JScrollPane scroll = new JScrollPane(tablaCert);
         panelCoord.add(scroll, BorderLayout.CENTER);
 
-        // Panel inferior con acciones
+        // Panel de botones
         JPanel panelBotones = new JPanel(new FlowLayout());
 
-        JButton btnVerInscritos = new JButton("Ver inscritos");
-        JButton btnVerPerfiles = new JButton("Perfiles estudiantes");
-        JButton btnContarInscritos = new JButton("Contar inscritos");
+        JButton btnModificarLinea       = new JButton("Modificar línea");
+        JButton btnGenerarCertificados  = new JButton("Generar certificados");
+        JButton btnEstadisticas         = new JButton("Mostrar estadísticas");
+        JButton btnAsignCriticas        = new JButton("Asignaturas críticas");
+        JButton btnPerfiles             = new JButton("Perfiles estudiantes");
+        JButton btnValidarAvance        = new JButton("Validar avance académico");
 
-        btnVerInscritos.addActionListener(e -> {
+        panelBotones.add(btnModificarLinea);
+        panelBotones.add(btnGenerarCertificados);
+        panelBotones.add(btnEstadisticas);
+        panelBotones.add(btnAsignCriticas);
+        panelBotones.add(btnPerfiles);
+        panelBotones.add(btnValidarAvance);
+
+        panelCoord.add(panelBotones, BorderLayout.SOUTH);
+
+        // ================== LISTENERS ==================
+
+        // 1) Modificar línea de certificación
+        btnModificarLinea.addActionListener(e -> {
             int fila = tablaCert.getSelectedRow();
             if (fila == -1) {
                 JOptionPane.showMessageDialog(panelCoord,
                         "Selecciona una certificación.",
-                        "Atención",
-                        JOptionPane.WARNING_MESSAGE);
+                        "Atención", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
             String id = (String) tablaCert.getValueAt(fila, 0);
-            ArrayList<RegistroCertificacion> regs =
-                    sistema.getRegistrosCertificacion(id);
-
-            StringBuilder sb = new StringBuilder();
-            sb.append("Inscritos en certificación ").append(id).append(":\n\n");
-            for (RegistroCertificacion r : regs) {
-                sb.append("Rut: ").append(r.getRutEstudiante())
-                  .append("  | Progreso: ").append(r.getProgreso())
-                  .append("  | Estado: ").append(r.getEstado())
-                  .append("\n");
+            Certificacion c = sistema.buscarCertificacion(id);
+            if (c == null) {
+                JOptionPane.showMessageDialog(panelCoord,
+                        "Certificación no encontrada en el sistema.",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                return;
             }
 
-            if (regs.isEmpty()) {
-                sb.append("(Sin inscritos)");
-            }
+            String nuevoNombre = JOptionPane.showInputDialog(panelCoord,
+                    "Nuevo nombre:", c.getNombre());
+            if (nuevoNombre == null || nuevoNombre.trim().isEmpty()) return;
 
-            mostrarTextoEnDialogo(panelCoord, "Inscritos", sb.toString());
+            String nuevaDesc = JOptionPane.showInputDialog(panelCoord,
+                    "Nueva descripción:", c.getDescripcion());
+            if (nuevaDesc == null || nuevaDesc.trim().isEmpty()) return;
+
+            String txtCred = JOptionPane.showInputDialog(panelCoord,
+                    "Créditos requeridos:", c.getCreditosRequeridos());
+            if (txtCred == null || txtCred.trim().isEmpty()) return;
+
+            String txtAnios = JOptionPane.showInputDialog(panelCoord,
+                    "Años de validez:", c.getAñosValidez());
+            if (txtAnios == null || txtAnios.trim().isEmpty()) return;
+
+            try {
+                int cred = Integer.parseInt(txtCred.trim());
+                int anios = Integer.parseInt(txtAnios.trim());
+
+                Certificacion modificada = new Certificacion(
+                        id,
+                        nuevoNombre.trim(),
+                        nuevaDesc.trim(),
+                        cred,
+                        anios
+                );
+
+                boolean ok = sistema.modificarLineaCertificacion(modificada);
+                if (ok) {
+                    JOptionPane.showMessageDialog(panelCoord,
+                            "Certificación modificada.");
+                    refrescarTablaCertificaciones(tablaCert, columnas);
+                } else {
+                    JOptionPane.showMessageDialog(panelCoord,
+                            "No se pudo modificar la certificación.",
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(panelCoord,
+                        "Créditos y años deben ser números.",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
-        btnVerPerfiles.addActionListener(e -> {
+        // 2) Generar certificados (para quienes tienen progreso alto o estado aprobado)
+        btnGenerarCertificados.addActionListener(e -> {
             int fila = tablaCert.getSelectedRow();
             if (fila == -1) {
                 JOptionPane.showMessageDialog(panelCoord,
                         "Selecciona una certificación.",
-                        "Atención",
-                        JOptionPane.WARNING_MESSAGE);
+                        "Atención", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
             String id = (String) tablaCert.getValueAt(fila, 0);
-            ArrayList<Estudiante> ests =
-                    sistema.obtenerPerfilesDeCertificacion(id);
+            ArrayList<RegistroCertificacion> regs = sistema.getRegistrosCertificacion(id);
+
+            if (regs.isEmpty()) {
+                JOptionPane.showMessageDialog(panelCoord,
+                        "No hay inscritos para generar certificados.",
+                        "Información", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("Certificados generados para ").append(id).append(":\n\n");
+
+            for (RegistroCertificacion r : regs) {
+                // criterio simple: progreso >= 100 o estado ya aprobado/completado
+                if (r.getProgreso() >= 100 ||
+                    r.getEstado().equalsIgnoreCase("APROBADA") ||
+                    r.getEstado().equalsIgnoreCase("COMPLETADA")) {
+
+                    Estudiante es = sistema.getEstudiante(r.getRutEstudiante());
+                    String nombreEst = (es != null) ? es.getNombre() : "(desconocido)";
+                    sb.append("• ").append(r.getRutEstudiante())
+                      .append(" - ").append(nombreEst)
+                      .append("  -> CERTIFICADO\n");
+                }
+            }
+
+            mostrarTextoEnDialogo(panelCoord, "Generar certificados", sb.toString());
+        });
+
+        // 3) Mostrar estadísticas (inscritos y progreso promedio por certificación)
+        btnEstadisticas.addActionListener(e -> {
+            ArrayList<Certificacion> lista = sistema.getCertificaciones();
+            StringBuilder sb = new StringBuilder();
+            sb.append("Estadísticas de certificaciones\n\n");
+
+            for (Certificacion c : lista) {
+                ArrayList<RegistroCertificacion> regs =
+                        sistema.getRegistrosCertificacion(c.getId());
+                int inscritos = regs.size();
+                double sumaProg = 0;
+                for (RegistroCertificacion r : regs) {
+                    sumaProg += r.getProgreso();
+                }
+                double promedioProg = inscritos == 0 ? 0 : sumaProg / inscritos;
+
+                sb.append(c.getId()).append(" - ").append(c.getNombre())
+                  .append(" | Inscritos: ").append(inscritos)
+                  .append(" | Progreso promedio: ")
+                  .append(String.format("%.1f", promedioProg)).append("%\n");
+            }
+
+            mostrarTextoEnDialogo(panelCoord, "Estadísticas", sb.toString());
+        });
+
+        // 4) Análisis de asignaturas críticas
+        btnAsignCriticas.addActionListener(e -> {
+            int fila = tablaCert.getSelectedRow();
+            if (fila == -1) {
+                JOptionPane.showMessageDialog(panelCoord,
+                        "Selecciona una certificación.",
+                        "Atención", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            String id = (String) tablaCert.getValueAt(fila, 0);
+            ArrayList<Curso> criticas = sistema.obtenerAsignaturasCriticas(id);
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("Asignaturas críticas para ").append(id).append(":\n\n");
+
+            if (criticas.isEmpty()) {
+                sb.append("(No hay asignaturas críticas definidas)");
+            } else {
+                for (Curso c : criticas) {
+                    sb.append("• ").append(c.getNrc())
+                      .append(" - ").append(c.getNombre()).append("\n");
+                }
+            }
+
+            mostrarTextoEnDialogo(panelCoord, "Asignaturas críticas", sb.toString());
+        });
+
+        // 5) Consultar perfiles (ya lo tenías como "Perfiles estudiantes")
+        btnPerfiles.addActionListener(e -> {
+            int fila = tablaCert.getSelectedRow();
+            if (fila == -1) {
+                JOptionPane.showMessageDialog(panelCoord,
+                        "Selecciona una certificación.",
+                        "Atención", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            String id = (String) tablaCert.getValueAt(fila, 0);
+            ArrayList<Estudiante> ests = sistema.obtenerPerfilesDeCertificacion(id);
 
             StringBuilder sb = new StringBuilder();
             sb.append("Perfiles de estudiantes inscritos en ").append(id).append(":\n\n");
-            for (Estudiante es : ests) {
-                sb.append(es.getRut()).append(" - ").append(es.getNombre())
-                  .append(" (").append(es.getCarrera()).append(")\n");
-            }
-
             if (ests.isEmpty()) {
-                sb.append("(Sin estudiantes)");
+                sb.append("(Sin estudiantes inscritos)");
+            } else {
+                for (Estudiante es : ests) {
+                    sb.append(es.getRut()).append(" - ").append(es.getNombre())
+                      .append(" (").append(es.getCarrera()).append(")\n");
+                }
             }
 
-            mostrarTextoEnDialogo(panelCoord, "Perfiles", sb.toString());
+            mostrarTextoEnDialogo(panelCoord, "Perfiles estudiantes", sb.toString());
         });
 
-        btnContarInscritos.addActionListener(e -> {
+        // 6) Revisar y validar avances académicos
+        btnValidarAvance.addActionListener(e -> {
             int fila = tablaCert.getSelectedRow();
             if (fila == -1) {
                 JOptionPane.showMessageDialog(panelCoord,
                         "Selecciona una certificación.",
-                        "Atención",
-                        JOptionPane.WARNING_MESSAGE);
+                        "Atención", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
             String id = (String) tablaCert.getValueAt(fila, 0);
-            int cantidad = sistema.contarInscritos(id);
-            JOptionPane.showMessageDialog(panelCoord,
-                    "Cantidad de inscritos en " + id + ": " + cantidad);
+            ArrayList<RegistroCertificacion> regs = sistema.getRegistrosCertificacion(id);
+
+            if (regs.isEmpty()) {
+                JOptionPane.showMessageDialog(panelCoord,
+                        "No hay estudiantes inscritos en esta certificación.",
+                        "Información", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("Revisión de avance académico para ").append(id).append(":\n\n");
+
+            for (RegistroCertificacion r : regs) {
+                Estudiante es = sistema.getEstudiante(r.getRutEstudiante());
+                String nombreEst = (es != null) ? es.getNombre() : "(desconocido)";
+
+                // lógica simple: si progreso >= 100, marcamos completado
+                if (r.getProgreso() >= 100 &&
+                    !r.getEstado().equalsIgnoreCase("COMPLETADA")) {
+                    r.setEstado("COMPLETADA");   // necesita setEstado(...) en RegistroCertificacion
+                }
+
+                sb.append(es.getRut()).append(" - ").append(nombreEst)
+                  .append(" | Progreso: ").append(r.getProgreso()).append("%")
+                  .append(" | Estado: ").append(r.getEstado()).append("\n");
+            }
+
+            mostrarTextoEnDialogo(panelCoord, "Validación de avance", sb.toString());
         });
-
-        panelBotones.add(btnVerInscritos);
-        panelBotones.add(btnVerPerfiles);
-        panelBotones.add(btnContarInscritos);
-
-        panelCoord.add(panelBotones, BorderLayout.SOUTH);
 
         tabs.addTab("Coordinador", panelCoord);
     }
 
-    private void refrescarTablaCertificaciones(JTable tabla, String[] columnas) {
-        ArrayList<Certificacion> lista = sistema.getCertificaciones();
-        Object[][] datos = new Object[lista.size()][columnas.length];
-
-        for (int i = 0; i < lista.size(); i++) {
-            Certificacion c = lista.get(i);
-            datos[i][0] = c.getId();
-            datos[i][1] = c.getNombre();
-            datos[i][2] = c.getDescripcion();
-            datos[i][3] = c.getCreditosRequeridos();
-            datos[i][4] = c.getAñosValidez();
-        }
-
-        DefaultTableModel modelo = new DefaultTableModel(datos, columnas) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        tabla.setModel(modelo);
-        tabla.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    }
-
-    private void mostrarTextoEnDialogo(JPanel parent, String titulo, String contenido) {
-        JFrame dialog = new JFrame(titulo);
-        dialog.setSize(500, 400);
-        dialog.setLocationRelativeTo(parent);
-
-        JTextField dummy = new JTextField(); // solo para evitar warning de imports
-        dummy.setVisible(false);
-
-        javax.swing.JTextArea area = new javax.swing.JTextArea(contenido);
-        area.setEditable(false);
-        area.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        dialog.add(new JScrollPane(area));
-
-        dialog.setVisible(true);
-    }
 
     // ============================================================
     //                         ESTUDIANTE
