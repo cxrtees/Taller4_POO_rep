@@ -718,4 +718,21 @@ public class Menu {
 
         tabs.addTab("Estudiante", panelEst);
     }
+    private void mostrarTextoEnDialogo(JPanel parent, String titulo, String contenido) {
+        javax.swing.JDialog dialog = new javax.swing.JDialog();
+        dialog.setTitle(titulo);
+        dialog.setSize(500, 400);
+        dialog.setLocationRelativeTo(parent);
+        dialog.setModal(true);
+
+        javax.swing.JTextArea area = new javax.swing.JTextArea(contenido);
+        area.setEditable(false);
+        area.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 12));
+
+        javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(area);
+        dialog.add(scroll);
+
+        dialog.setVisible(true);
+    }
+
 }
