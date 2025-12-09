@@ -208,13 +208,27 @@ public class Menu {
             }
 
             String nombre = (String) tablaUsuarios.getValueAt(fila, 0);
+            String rol    = (String) tablaUsuarios.getValueAt(fila, 1);
+
+            // ---- RESTRICCIÓN: no permitir eliminar administradores ----
+            if (rol.equalsIgnoreCase("ADMIN")) {
+                JOptionPane.showMessageDialog(panelAdmin,
+                        "No se pueden eliminar cuentas de ADMINISTRADOR.",
+                        "Operación no permitida",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
             int resp = JOptionPane.showConfirmDialog(panelAdmin,
                     "¿Eliminar usuario '" + nombre + "'?",
                     "Confirmar",
                     JOptionPane.YES_NO_OPTION);
-            if (resp != JOptionPane.YES_OPTION) return;
+
+            if (resp != JOptionPane.YES_OPTION)
+                return;
 
             boolean ok = sistema.eliminarCuenta(nombre);
+
             if (ok) {
                 JOptionPane.showMessageDialog(panelAdmin, "Usuario eliminado.");
                 refrescarTablaUsuarios(tablaUsuarios, columnas);
@@ -225,6 +239,7 @@ public class Menu {
                         JOptionPane.ERROR_MESSAGE);
             }
         });
+
 
         // RESET CONTRASEÑA
         btnReset.addActionListener(e -> {
