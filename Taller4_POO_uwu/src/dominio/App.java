@@ -8,7 +8,7 @@ public class App {
 
     public static void main(String[] args) {
         // Creamos el sistema (lógica/dominio)
-        SistemaIn sistema = new Sistema();
+        SistemaIn sistema = Sistema.getInstancia();
 
         // Creamos el menú (GUI) y lo iniciamos
         Menu menu = new Menu(sistema);
