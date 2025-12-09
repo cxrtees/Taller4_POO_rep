@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
@@ -934,6 +935,140 @@ public class Menu {
 
         dialog.setVisible(true);
     }
+ // ================= RENDERER PARA MALLA =================
+    private static class EstadoAsignaturaRenderer extends javax.swing.table.DefaultTableCellRenderer {
+
+        private int colEstado;
+
+        public EstadoAsignaturaRenderer(int colEstado) {
+            this.colEstado = colEstado;
+        }
+
+        @Override
+        public java.awt.Component getTableCellRendererComponent(
+                javax.swing.JTable table, Object value, boolean isSelected,
+                boolean hasFocus, int row, int column) {
+
+            java.awt.Component c = super.getTableCellRendererComponent(
+                    table, value, isSelected, hasFocus, row, column);
+
+            // Por defecto
+            if (!isSelected) {
+                c.setBackground(java.awt.Color.WHITE);
+            }
+
+            if (column == colEstado) {
+                String estado = (value == null) ? "" : value.toString();
+                if (estado.equalsIgnoreCase("Aprobada")) {
+                    c.setBackground(new java.awt.Color(198, 239, 206)); // verde suave
+                } else if (estado.equalsIgnoreCase("Reprobada")) {
+                    c.setBackground(new java.awt.Color(255, 199, 206)); // rojo suave
+                } else if (estado.equalsIgnoreCase("Cursando")) {
+                    c.setBackground(new java.awt.Color(255, 235, 156)); // amarillo suave
+                } else if (estado.equalsIgnoreCase("Pendiente")) {
+                    c.setBackground(new java.awt.Color(230, 230, 230)); // gris
+                }
+            }
+
+            return c;
+        }
+    }
+ // ================= ACTUALIZAR MALLA =================
+    private void actualizarMallaParaRut(String rut, javax.swing.table.DefaultTableModel modeloMalla) {
+        modeloMalla.setRowCount(0); // limpiar
+
+        // Cursos de la malla (puede ser completa o filtrada según tu implementación)
+        java.util.ArrayList<dominio.Curso> cursos = sistema.getMallaCompleta(rut);
+        // Notas del estudiante
+        java.util.ArrayList<dominio.Nota> notas = sistema.getNotasEstudiante(rut);
+
+        // Mapa códigoAsignatura -> estado
+        java.util.HashMap<String, dominio.Nota> mapaNotas = new java.util.HashMap<>();
+        for (dominio.Nota n : notas) {
+            mapaNotas.put(n.getCodigoAsignatura(), n);
+        }
+
+        for (dominio.Curso c : cursos) {
+            dominio.Nota n = mapaNotas.get(c.getNcr());
+            String estado = "Pendiente";
+            Double nota = null;
+
+            if (n != null) {
+                estado = n.getEstado();
+                nota = n.getCalificacion();
+            }
+
+            // Ajusta las columnas según tu modelo de malla
+            // Ejemplo: {NRC, Nombre, Semestre, Créditos, Nota, Estado}
+            Object[] fila = {
+                    c.getNcr(),
+                    c.getNombre(),
+                    c.getSemestre(),
+                    c.getCreditos(),
+                    (nota == null ? "-" : nota),
+                    estado
+            };
+
+            modeloMalla.addRow(fila);
+        }
+    }
+ // ================= INSCRIPCIÓN A CERTIFICACIONES =================
+    private void gestionarInscripcionCertificacion(String rut, java.awt.Component parent) {
+        // Lista de certificaciones disponibles
+        java.util.ArrayList<dominio.Certificacion> lista = sistema.getCertificaciones();
+        if (lista.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(parent,
+                    "No hay certificaciones disponibles.",
+                    "Información",
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        String[] opciones = new String[lista.size()];
+        for (int i = 0; i < lista.size(); i++) {
+            dominio.Certificacion c = lista.get(i);
+            opciones[i] = c.getId() + " - " + c.getNombre();
+        }
+
+        String seleccion = (String) javax.swing.JOptionPane.showInputDialog(
+                parent,
+                "Selecciona una certificación para inscribirte:",
+                "Inscripción a certificación",
+                javax.swing.JOptionPane.PLAIN_MESSAGE,
+                null,
+                opciones,
+                opciones[0]);
+
+        if (seleccion == null) return; // canceló
+
+        String idSeleccionado = seleccion.split(" - ")[0];
+
+        // Primero verificar requisitos
+        boolean cumple = sistema.verificarRequisitos(rut, idSeleccionado);
+        if (!cumple) {
+            javax.swing.JOptionPane.showMessageDialog(parent,
+                    "No cumples los requisitos académicos para esta certificación.",
+                    "Requisitos no cumplidos",
+                    javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Intentar inscribir
+        boolean ok = sistema.inscribirCertificacion(rut, idSeleccionado);
+        if (ok) {
+            javax.swing.JOptionPane.showMessageDialog(parent,
+                    "Inscripción realizada correctamente.",
+                    "Éxito",
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(parent,
+                    "No se pudo realizar la inscripción.",
+                    "Error",
+                    javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+
 
 
 
