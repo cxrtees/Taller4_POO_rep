@@ -89,7 +89,7 @@ public class Menu {
             if (pass == null || pass.trim().isEmpty()) return;
 
             String rol = JOptionPane.showInputDialog(panelAdmin,
-                    "Rol (ADMIN / COORDINADOR / ESTUDIANTE):");
+                    "Rol (COORDINADOR / ESTUDIANTE):");
             if (rol == null || rol.trim().isEmpty()) return;
 
             String extra = JOptionPane.showInputDialog(panelAdmin,
@@ -111,6 +111,7 @@ public class Menu {
         });
 
         // MODIFICAR
+     // MODIFICAR
         btnModificar.addActionListener(e -> {
             int fila = tablaUsuarios.getSelectedRow();
             if (fila == -1) {
@@ -122,12 +123,36 @@ public class Menu {
             }
 
             String nombreActual = (String) tablaUsuarios.getValueAt(fila, 0);
-            String rolActual = (String) tablaUsuarios.getValueAt(fila, 1);
-            String extraActual = (String) tablaUsuarios.getValueAt(fila, 2);
+            String rolActual    = (String) tablaUsuarios.getValueAt(fila, 1);
+            String extraActual  = (String) tablaUsuarios.getValueAt(fila, 2);
+
+            // ---- RESTRICCIÓN: solo se pueden modificar ESTUDIANTE o COORDINADOR ----
+            if (!rolActual.equalsIgnoreCase("ESTUDIANTE") &&
+                !rolActual.equalsIgnoreCase("COORDINADOR")) {
+
+                JOptionPane.showMessageDialog(panelAdmin,
+                        "Solo se pueden modificar cuentas de ESTUDIANTE o COORDINADOR.",
+                        "Operación no permitida",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
 
             String nuevoRol = JOptionPane.showInputDialog(panelAdmin,
-                    "Nuevo rol:", rolActual);
-            if (nuevoRol == null || nuevoRol.trim().isEmpty()) return;
+                    "Nuevo rol (ESTUDIANTE / COORDINADOR):", rolActual);
+
+            if (nuevoRol == null || nuevoRol.trim().isEmpty())
+                return;
+
+            nuevoRol = nuevoRol.trim().toUpperCase();
+
+            // Opcional: también restringimos el rol nuevo
+            if (!nuevoRol.equals("ESTUDIANTE") && !nuevoRol.equals("COORDINADOR")) {
+                JOptionPane.showMessageDialog(panelAdmin,
+                        "El rol debe ser ESTUDIANTE o COORDINADOR.",
+                        "Rol inválido",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             String nuevoExtra = JOptionPane.showInputDialog(panelAdmin,
                     "Nueva info adicional:", extraActual);
@@ -136,6 +161,7 @@ public class Menu {
             // Pedimos nueva contraseña opcionalmente
             String nuevaPass = JOptionPane.showInputDialog(panelAdmin,
                     "Nueva contraseña (deja vacío para no cambiar):");
+
             Usuario usuarioBase = buscarUsuarioPorNombre(nombreActual);
             if (usuarioBase == null) {
                 JOptionPane.showMessageDialog(panelAdmin,
@@ -150,8 +176,13 @@ public class Menu {
                 passFinal = nuevaPass.trim();
             }
 
-            Usuario modificado = new Usuario(nombreActual, passFinal,
-                    nuevoRol.trim(), nuevoExtra.trim());
+            Usuario modificado = new Usuario(
+                    nombreActual,
+                    passFinal,
+                    nuevoRol,
+                    nuevoExtra.trim()
+            );
+
             boolean ok = sistema.modificarCuenta(modificado);
 
             if (ok) {
