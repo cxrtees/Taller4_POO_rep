@@ -9,6 +9,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -608,25 +609,31 @@ public class Menu {
     // ============================================================
     //                         ESTUDIANTE
     // ============================================================
+ // ======================== ESTUDIANTE ========================
     private void vistaEstudiante(JTabbedPane tabs) {
-        JPanel root = new JPanel(new BorderLayout(10, 10));
-        root.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // --------- ARRIBA: RUT + botón Cargar (común a todas las subtabs) ----------
+        // Panel raíz de la pestaña Estudiante
+        JPanel panelEst = new JPanel(new BorderLayout(10, 10));
+        panelEst.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        tabs.addTab("Estudiante", panelEst);
+
+        // ---------- ARRIBA: RUT + botón Cargar ----------
         JPanel panelRut = new JPanel(new FlowLayout());
         JLabel lblRut = new JLabel("RUT estudiante:");
         JTextField txtRut = new JTextField(15);
         JButton btnCargar = new JButton("Cargar datos");
+
         panelRut.add(lblRut);
         panelRut.add(txtRut);
         panelRut.add(btnCargar);
-        root.add(panelRut, BorderLayout.NORTH);
 
-        // --------- CENTRO: subtabs ---------
+        panelEst.add(panelRut, BorderLayout.NORTH);
+
+        // ---------- CENTRO: subtabs ----------
         JTabbedPane subTabs = new JTabbedPane();
-        root.add(subTabs, BorderLayout.CENTER);
+        panelEst.add(subTabs, BorderLayout.CENTER);
 
-        // ============ 1) PERFIL Y MALLA ============
+        // ============ 1) PERFIL Y MALLA NORMAL ============
         JPanel panelPerfilMalla = new JPanel(new BorderLayout(5, 5));
 
         // Perfil
@@ -644,26 +651,27 @@ public class Menu {
         panelPerfil.add(lblSemestre);
         panelPerfil.add(lblCorreo);
 
-        // Malla (tabla)
+        // Malla (tabla normal)
         JPanel panelMalla = new JPanel(new BorderLayout());
-        panelMalla.setBorder(BorderFactory.createTitledBorder("Malla curricular"));
+        panelMalla.setBorder(BorderFactory.createTitledBorder("Malla curricular (todas las asignaturas)"));
 
-        String[] colMalla = {"Código/NRC", "Nombre asignatura", "Semestre", "Créditos", "Estado"};
+        String[] colMalla = {"Código/NRC", "Asignatura", "Semestre", "Créditos", "Nota", "Estado"};
         DefaultTableModel modeloMalla = new DefaultTableModel(colMalla, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
+
         JTable tablaMalla = new JTable(modeloMalla);
-        // renderer para colorear por estado
+        // renderer para colorear por estado (última columna = Estado)
         tablaMalla.setDefaultRenderer(Object.class,
-                new EstadoAsignaturaRenderer(colMalla.length - 1)); // última col = Estado
+                new EstadoAsignaturaRenderer(colMalla.length - 1));
 
         JScrollPane scrollMalla = new JScrollPane(tablaMalla);
         panelMalla.add(scrollMalla, BorderLayout.CENTER);
 
-        // Panel inferior: botones de promedio
+        // Botones de promedio
         JPanel panelPromedios = new JPanel(new FlowLayout());
         JButton btnPromGeneral = new JButton("Promedio general");
         JButton btnPromSemestre = new JButton("Promedio por semestre");
@@ -677,7 +685,42 @@ public class Menu {
 
         subTabs.addTab("Perfil y malla", panelPerfilMalla);
 
-        // ============ 2) INSCRIPCIÓN CERTIFICACIONES ============
+        // ============ 2) MALLA INTERACTIVA (por semestre) ============
+        JPanel panelMallaInteractiva = new JPanel(new BorderLayout(5, 5));
+        panelMallaInteractiva.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        JPanel panelSemestre = new JPanel(new FlowLayout());
+        JLabel lblSemInt = new JLabel("Semestre:");
+        Integer[] semestres = {1,2,3,4,5,6,7,8,9,10};
+        JComboBox<Integer> comboSemestre = new JComboBox<>(semestres);
+        JButton btnVerSemestre = new JButton("Ver malla semestre");
+        panelSemestre.add(lblSemInt);
+        panelSemestre.add(comboSemestre);
+        panelSemestre.add(btnVerSemestre);
+
+        panelMallaInteractiva.add(panelSemestre, BorderLayout.NORTH);
+
+        String[] colMallaInt = {"Código/NRC", "Asignatura", "Semestre", "Créditos", "Nota", "Estado"};
+        DefaultTableModel modeloMallaInt = new DefaultTableModel(colMallaInt, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        JTable tablaMallaInt = new JTable(modeloMallaInt);
+        tablaMallaInt.setDefaultRenderer(Object.class,
+                new EstadoAsignaturaRenderer(colMallaInt.length - 1));
+
+        JScrollPane scrollMallaInt = new JScrollPane(tablaMallaInt);
+        scrollMallaInt.setBorder(
+                BorderFactory.createTitledBorder("Malla interactiva por semestre")
+        );
+        panelMallaInteractiva.add(scrollMallaInt, BorderLayout.CENTER);
+
+        subTabs.addTab("Malla interactiva", panelMallaInteractiva);
+
+        // ============ 3) INSCRIPCIÓN CERTIFICACIONES ============
         JPanel panelInscripcion = new JPanel(new BorderLayout(5, 5));
         panelInscripcion.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -703,7 +746,7 @@ public class Menu {
 
         subTabs.addTab("Inscripción certificaciones", panelInscripcion);
 
-        // ============ 3) SEGUIMIENTO ============
+        // ============ 4) SEGUIMIENTO ============
         JPanel panelSeguimiento = new JPanel(new BorderLayout(5, 5));
         JTextArea areaDash = new JTextArea();
         areaDash.setEditable(false);
@@ -720,13 +763,15 @@ public class Menu {
 
         subTabs.addTab("Seguimiento", panelSeguimiento);
 
-        // ======================== LISTENERS ========================
+        // =====================================================
+        //                     LISTENERS
+        // =====================================================
 
-        // Cargar Perfil + Malla (usa notas para saber estado)
+        // Cargar perfil + malla normal
         btnCargar.addActionListener(e -> {
             String rut = txtRut.getText().trim();
             if (rut.isEmpty()) {
-                JOptionPane.showMessageDialog(root,
+                JOptionPane.showMessageDialog(panelEst,
                         "Ingrese un RUT.",
                         "Atención",
                         JOptionPane.WARNING_MESSAGE);
@@ -735,7 +780,7 @@ public class Menu {
 
             Estudiante es = sistema.getEstudiante(rut);
             if (es == null) {
-                JOptionPane.showMessageDialog(root,
+                JOptionPane.showMessageDialog(panelEst,
                         "No se encontró estudiante con rut " + rut,
                         "Error",
                         JOptionPane.ERROR_MESSAGE);
@@ -747,7 +792,7 @@ public class Menu {
             lblSemestre.setText("Semestre: " + es.getSemestre());
             lblCorreo.setText("Correo: " + es.getCorreo());
 
-            // Actualizar malla con colores según estado (Aprobada/Reprobada/Pendiente)
+            // Malla completa con colores
             actualizarMallaParaRut(rut, modeloMalla);
         });
 
@@ -755,22 +800,22 @@ public class Menu {
         btnPromGeneral.addActionListener(e -> {
             String rut = txtRut.getText().trim();
             if (rut.isEmpty()) {
-                JOptionPane.showMessageDialog(root,
+                JOptionPane.showMessageDialog(panelEst,
                         "Ingrese un RUT y cargue datos primero.",
                         "Atención",
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
             double prom = sistema.calcularPromedioGeneral(rut);
-            JOptionPane.showMessageDialog(root,
+            JOptionPane.showMessageDialog(panelEst,
                     "Promedio general del estudiante: " + prom);
         });
 
-        // Promedio por semestre (con combo de números)
+        // Promedio por semestre
         btnPromSemestre.addActionListener(e -> {
             String rut = txtRut.getText().trim();
             if (rut.isEmpty()) {
-                JOptionPane.showMessageDialog(root,
+                JOptionPane.showMessageDialog(panelEst,
                         "Ingrese un RUT y cargue datos primero.",
                         "Atención",
                         JOptionPane.WARNING_MESSAGE);
@@ -779,7 +824,7 @@ public class Menu {
 
             Integer[] opciones = {1,2,3,4,5,6,7,8,9,10};
             Integer semestre = (Integer) JOptionPane.showInputDialog(
-                    root,
+                    panelEst,
                     "Seleccione semestre:",
                     "Promedio por semestre",
                     JOptionPane.QUESTION_MESSAGE,
@@ -790,11 +835,28 @@ public class Menu {
             if (semestre == null) return;
 
             double prom = sistema.calcularPromedioSemestre(rut, semestre);
-            JOptionPane.showMessageDialog(root,
+            JOptionPane.showMessageDialog(panelEst,
                     "Promedio del semestre " + semestre + ": " + prom);
         });
 
-        // ---- INSCRIPCIÓN: listar líneas ----
+        // Malla interactiva: ver por semestre
+        btnVerSemestre.addActionListener(e -> {
+            String rut = txtRut.getText().trim();
+            if (rut.isEmpty()) {
+                JOptionPane.showMessageDialog(panelEst,
+                        "Ingrese un RUT y cargue datos primero.",
+                        "Atención",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            Integer sem = (Integer) comboSemestre.getSelectedItem();
+            if (sem == null) return;
+
+            actualizarMallaParaRutYSemestre(rut, sem, modeloMallaInt);
+        });
+
+        // INSCRIPCIÓN: listar líneas
         btnListarLineas.addActionListener(e -> {
             StringBuilder sb = new StringBuilder();
             ArrayList<Certificacion> certs = sistema.getCertificaciones();
@@ -808,11 +870,11 @@ public class Menu {
             areaCerts.setText(sb.toString());
         });
 
-        // Mostrar requisitos y descripción
+        // Mostrar requisitos
         btnVerRequisitos.addActionListener(e -> {
             ArrayList<Certificacion> certs = sistema.getCertificaciones();
             if (certs.isEmpty()) {
-                JOptionPane.showMessageDialog(root,
+                JOptionPane.showMessageDialog(panelEst,
                         "No hay certificaciones disponibles.",
                         "Info", JOptionPane.INFORMATION_MESSAGE);
                 return;
@@ -822,7 +884,7 @@ public class Menu {
                 opciones[i] = certs.get(i).getId() + " - " + certs.get(i).getNombre();
             }
             String seleccion = (String) JOptionPane.showInputDialog(
-                    root,
+                    panelEst,
                     "Seleccione certificación:",
                     "Requisitos",
                     JOptionPane.QUESTION_MESSAGE,
@@ -848,20 +910,20 @@ public class Menu {
         btnInscribir.addActionListener(e -> {
             String rut = txtRut.getText().trim();
             if (rut.isEmpty()) {
-                JOptionPane.showMessageDialog(root,
+                JOptionPane.showMessageDialog(panelEst,
                         "Ingrese un RUT primero.",
                         "Atención",
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            gestionarInscripcionCertificacion(rut, root);
+            gestionarInscripcionCertificacion(rut, panelEst);
         });
 
         // Verificar requisitos
         btnVerificarReq.addActionListener(e -> {
             String rut = txtRut.getText().trim();
             if (rut.isEmpty()) {
-                JOptionPane.showMessageDialog(root,
+                JOptionPane.showMessageDialog(panelEst,
                         "Ingrese un RUT primero.",
                         "Atención",
                         JOptionPane.WARNING_MESSAGE);
@@ -869,7 +931,7 @@ public class Menu {
             }
             ArrayList<Certificacion> certs = sistema.getCertificaciones();
             if (certs.isEmpty()) {
-                JOptionPane.showMessageDialog(root,
+                JOptionPane.showMessageDialog(panelEst,
                         "No hay certificaciones disponibles.",
                         "Info", JOptionPane.INFORMATION_MESSAGE);
                 return;
@@ -879,7 +941,7 @@ public class Menu {
                 opciones[i] = certs.get(i).getId() + " - " + certs.get(i).getNombre();
             }
             String seleccion = (String) JOptionPane.showInputDialog(
-                    root,
+                    panelEst,
                     "Seleccione certificación:",
                     "Verificar requisitos",
                     JOptionPane.QUESTION_MESSAGE,
@@ -891,11 +953,11 @@ public class Menu {
 
             boolean cumple = sistema.verificarRequisitos(rut, idSel);
             if (cumple) {
-                JOptionPane.showMessageDialog(root,
+                JOptionPane.showMessageDialog(panelEst,
                         "El estudiante CUMPLE los requisitos.",
                         "Requisitos", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(root,
+                JOptionPane.showMessageDialog(panelEst,
                         "El estudiante NO cumple los requisitos.",
                         "Requisitos", JOptionPane.WARNING_MESSAGE);
             }
@@ -905,7 +967,7 @@ public class Menu {
         btnVerInscripciones.addActionListener(e -> {
             String rut = txtRut.getText().trim();
             if (rut.isEmpty()) {
-                JOptionPane.showMessageDialog(root,
+                JOptionPane.showMessageDialog(panelEst,
                         "Ingrese un RUT primero.",
                         "Atención",
                         JOptionPane.WARNING_MESSAGE);
@@ -928,8 +990,6 @@ public class Menu {
             }
             areaDash.setText(sb.toString());
         });
-
-        tabs.addTab("Estudiante", root);
     }
 
     private void refrescarTablaCertificaciones(JTable tabla, String[] columnas) {
@@ -1068,7 +1128,7 @@ public class Menu {
             // filtramos por semestre
             if (c.getSemestre() != semestreFiltro) continue;
 
-            dominio.Nota n = mapaNotas.get(c.getNrc());
+            dominio.Nota n = mapaNotas.get(c.getNcr());
             String estado = "Pendiente";
             Double nota   = null;
 
@@ -1078,7 +1138,7 @@ public class Menu {
             }
 
             Object[] fila = {
-                    c.getNrc(),
+                    c.getNcr(),
                     c.getNombre(),
                     c.getSemestre(),
                     c.getCreditos(),
