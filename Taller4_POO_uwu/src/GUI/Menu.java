@@ -348,6 +348,7 @@ public class Menu {
                 return;
             }
 
+            // ID de la certificación seleccionada
             String id = (String) tablaCert.getValueAt(fila, 0);
             Certificacion c = sistema.buscarCertificacion(id);
             if (c == null) {
@@ -357,90 +358,127 @@ public class Menu {
                 return;
             }
 
-            String nuevoNombre = JOptionPane.showInputDialog(panelCoord,
-                    "Nuevo nombre:", c.getNombre());
+            // ---------- Pedimos los NUEVOS valores ----------
+            String nuevoNombre = JOptionPane.showInputDialog(
+                    panelCoord,
+                    "Nuevo nombre:",
+                    c.getNombre()
+            );
             if (nuevoNombre == null || nuevoNombre.trim().isEmpty()) return;
 
-            String nuevaDesc = JOptionPane.showInputDialog(panelCoord,
-                    "Nueva descripción:", c.getDescripcion());
+            String nuevaDesc = JOptionPane.showInputDialog(
+                    panelCoord,
+                    "Nueva descripción:",
+                    c.getDescripcion()
+            );
             if (nuevaDesc == null || nuevaDesc.trim().isEmpty()) return;
 
-            String txtCred = JOptionPane.showInputDialog(panelCoord,
-                    "Créditos requeridos:", c.getCreditosRequeridos());
+            String txtCred = JOptionPane.showInputDialog(
+                    panelCoord,
+                    "Créditos necesarios:",
+                    c.getCreditosRequeridos()
+            );
             if (txtCred == null || txtCred.trim().isEmpty()) return;
 
-            String txtAnios = JOptionPane.showInputDialog(panelCoord,
-                    "Años de validez:", c.getAñosValidez());
+            String txtAnios = JOptionPane.showInputDialog(
+                    panelCoord,
+                    "Años de validez:",
+                    c.getAñosValidez()
+            );
             if (txtAnios == null || txtAnios.trim().isEmpty()) return;
 
             try {
-                int cred = Integer.parseInt(txtCred.trim());
-                int anios = Integer.parseInt(txtAnios.trim());
+                int nuevosCreditos = Integer.parseInt(txtCred.trim());
+                int nuevosAnios    = Integer.parseInt(txtAnios.trim());
 
+                // Creamos una certificación modificada con los nuevos datos
                 Certificacion modificada = new Certificacion(
                         id,
                         nuevoNombre.trim(),
                         nuevaDesc.trim(),
-                        cred,
-                        anios
+                        nuevosCreditos,
+                        nuevosAnios
                 );
 
                 boolean ok = sistema.modificarLineaCertificacion(modificada);
                 if (ok) {
                     JOptionPane.showMessageDialog(panelCoord,
-                            "Certificación modificada.");
+                            "Línea de certificación modificada.");
                     refrescarTablaCertificaciones(tablaCert, columnas);
                 } else {
                     JOptionPane.showMessageDialog(panelCoord,
                             "No se pudo modificar la certificación.",
                             "Error", JOptionPane.ERROR_MESSAGE);
                 }
-            } catch (NumberFormatException ex) {
+            } catch (NumberFormatException exNum) {
                 JOptionPane.showMessageDialog(panelCoord,
-                        "Créditos y años deben ser números.",
+                        "Créditos y años de validez deben ser números enteros.",
                         "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
         // 2) Generar certificados (para quienes tienen progreso alto o estado aprobado)
         btnGenerarCertificados.addActionListener(e -> {
+
+            // Elegir certificación desde la tabla
             int fila = tablaCert.getSelectedRow();
             if (fila == -1) {
                 JOptionPane.showMessageDialog(panelCoord,
                         "Selecciona una certificación.",
-                        "Atención", JOptionPane.WARNING_MESSAGE);
+                        "Atención",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            String id = (String) tablaCert.getValueAt(fila, 0);
-            ArrayList<RegistroCertificacion> regs = sistema.getRegistrosCertificacion(id);
+            String idCert = (String) tablaCert.getValueAt(fila, 0);
+
+            // Obtener registros asociados a esa certificación
+            ArrayList<RegistroCertificacion> regs =
+                    sistema.getRegistrosCertificacion(idCert);
 
             if (regs.isEmpty()) {
-                JOptionPane.showMessageDialog(panelCoord,
-                        "No hay inscritos para generar certificados.",
-                        "Información", JOptionPane.INFORMATION_MESSAGE);
+                mostrarTextoEnDialogo(panelCoord,
+                        "Certificados",
+                        "No hay estudiantes inscritos en esta certificación.");
                 return;
             }
 
             StringBuilder sb = new StringBuilder();
-            sb.append("Certificados generados para ").append(id).append(":\n\n");
+            sb.append("CERTIFICADOS GENERADOS\n");
+            sb.append("Certificación: ").append(idCert).append("\n\n");
+
+            int count = 0;
 
             for (RegistroCertificacion r : regs) {
-                // criterio simple: progreso >= 100 o estado ya aprobado/completado
-                if (r.getProgreso() >= 100 ||
-                    r.getEstado().equalsIgnoreCase("APROBADA") ||
-                    r.getEstado().equalsIgnoreCase("COMPLETADA")) {
 
-                    Estudiante es = sistema.getEstudiante(r.getRutEstudiante());
-                    String nombreEst = (es != null) ? es.getNombre() : "(desconocido)";
-                    sb.append("• ").append(r.getRutEstudiante())
-                      .append(" - ").append(nombreEst)
-                      .append("  -> CERTIFICADO\n");
-                }
+                boolean completado =
+                        r.getEstado().equalsIgnoreCase("Completada")
+                        || r.getProgreso() >= 100;
+
+                if (!completado) continue; // no mostrar los que no han terminado
+
+                Estudiante est = sistema.getEstudiante(r.getRutEstudiante());
+                if (est == null) continue;
+
+                count++;
+
+                sb.append("• RUT: ").append(est.getRut()).append("\n");
+                sb.append("  Nombre: ").append(est.getNombre()).append("\n");
+                sb.append("  Carrera: ").append(est.getCarrera()).append("\n");
+                sb.append("  Certificación completada en fecha: ")
+                        .append(r.getFechaRegistro()).append("\n\n");
             }
 
-            mostrarTextoEnDialogo(panelCoord, "Generar certificados", sb.toString());
+            if (count == 0) {
+                mostrarTextoEnDialogo(panelCoord,
+                        "Certificados",
+                        "Ningún estudiante ha completado esta certificación.");
+                return;
+            }
+
+            mostrarTextoEnDialogo(panelCoord, "Certificados generados", sb.toString());
         });
+
 
         // 3) Mostrar estadísticas (inscritos y progreso promedio por certificación)
         btnEstadisticas.addActionListener(e -> {
