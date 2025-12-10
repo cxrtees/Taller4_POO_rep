@@ -1250,6 +1250,98 @@ public class Menu {
                     javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }
+ // Detalle de una asignatura en la malla interactiva
+    private void mostrarDetalleAsignaturaInteractiva(String rut,
+                                                     String nrc,
+                                                     java.awt.Component parent) {
+
+        // Buscar el curso en la malla completa
+        java.util.ArrayList<dominio.Curso> cursos = sistema.getMallaCompleta(rut);
+        dominio.Curso cursoSeleccionado = null;
+
+        for (dominio.Curso c : cursos) {
+            if (c.getNrc().equals(nrc)) {   // ajusta si usas otro código
+                cursoSeleccionado = c;
+                break;
+            }
+        }
+
+        if (cursoSeleccionado == null) {
+            JOptionPane.showMessageDialog(parent,
+                    "No se encontró la asignatura con NRC " + nrc,
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Notas del estudiante para esta asignatura
+        java.util.ArrayList<dominio.Nota> notas = sistema.getNotasEstudiante(rut);
+        dominio.Nota notaCurso = null;
+        for (dominio.Nota n : notas) {
+            // en Notas.txt el campo es "codigoAsignatura" -> coincide con el NRC del curso
+            if (n.getCodigoAsignatura().equals(nrc)) {
+                notaCurso = n;
+                break;
+            }
+        }
+
+        // Prerrequisitos del curso (el último campo del txt de cursos)
+        String prereq = cursoSeleccionado.getPrereqText();  // ajusta nombre del getter si difiere
+        if (prereq == null || prereq.trim().isEmpty()) {
+            prereq = "Sin prerrequisitos registrados.";
+        }
+
+        // "Ramos que abre": otros cursos que tienen este NRC en su lista de prerrequisitos
+        java.util.ArrayList<dominio.Curso> abre = new java.util.ArrayList<>();
+        for (dominio.Curso c : cursos) {
+            String txt = c.getPrereqText();
+            if (txt != null && !txt.isEmpty() && txt.contains(nrc)) {
+                abre.add(c);
+            }
+        }
+
+        // Armamos el texto
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("ASIGNATURA\n");
+        sb.append("==========\n");
+        sb.append("Nombre   : ").append(cursoSeleccionado.getNombre()).append("\n");
+        sb.append("NRC      : ").append(cursoSeleccionado.getNrc()).append("\n");
+        sb.append("Área     : ").append(cursoSeleccionado.getArea()).append("\n");
+        sb.append("Semestre : ").append(cursoSeleccionado.getSemestre()).append("\n");
+        sb.append("Créditos : ").append(cursoSeleccionado.getCreditos()).append("\n\n");
+
+        sb.append("PRERREQUISITOS\n");
+        sb.append("==============\n");
+        sb.append(prereq).append("\n\n");
+
+        sb.append("ESTADO DEL ESTUDIANTE\n");
+        sb.append("======================\n");
+        if (notaCurso != null) {
+            sb.append("Nota   : ").append(notaCurso.getCalificacion()).append("\n");
+            sb.append("Estado : ").append(notaCurso.getEstado()).append("\n");
+            sb.append("Semestre cursado : ").append(notaCurso.getSemestre()).append("\n");
+        } else {
+            sb.append("La asignatura aún no ha sido cursada (pendiente).\n");
+        }
+        sb.append("\n");
+
+        sb.append("RAMOS QUE HABILITA (que la tienen como prerrequisito)\n");
+        sb.append("=====================================================\n");
+        if (abre.isEmpty()) {
+            sb.append("- Ninguno registrado.\n");
+        } else {
+            for (dominio.Curso c : abre) {
+                sb.append("- ").append(c.getNrc())
+                  .append(" : ").append(c.getNombre())
+                  .append(" (sem ").append(c.getSemestre()).append(")\n");
+            }
+        }
+
+        // Mostrar en diálogo con scroll
+        mostrarTextoEnDialogo(parent, "Detalle de asignatura", sb.toString());
+    }
+
 
 
 
