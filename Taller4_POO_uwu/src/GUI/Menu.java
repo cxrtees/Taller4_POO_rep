@@ -633,7 +633,9 @@ public class Menu {
         JTabbedPane subTabs = new JTabbedPane();
         panelEst.add(subTabs, BorderLayout.CENTER);
 
-        // ============ 1) PERFIL Y MALLA NORMAL ============
+        // =====================================================
+        // 1) PERFIL + MALLA NORMAL (tabla completa con colores)
+        // =====================================================
         JPanel panelPerfilMalla = new JPanel(new BorderLayout(5, 5));
 
         // Perfil
@@ -664,9 +666,8 @@ public class Menu {
         };
 
         JTable tablaMalla = new JTable(modeloMalla);
-        // renderer para colorear por estado (última columna = Estado)
         tablaMalla.setDefaultRenderer(Object.class,
-                new EstadoAsignaturaRenderer(colMalla.length - 1));
+                new EstadoAsignaturaRenderer(colMalla.length - 1)); // última col = Estado
 
         JScrollPane scrollMalla = new JScrollPane(tablaMalla);
         panelMalla.add(scrollMalla, BorderLayout.CENTER);
@@ -685,7 +686,9 @@ public class Menu {
 
         subTabs.addTab("Perfil y malla", panelPerfilMalla);
 
-        // ============ 2) MALLA INTERACTIVA (por semestre) ============
+        // =====================================================
+        // 2) MALLA INTERACTIVA (tabla filtrada por semestre)
+        // =====================================================
         JPanel panelMallaInteractiva = new JPanel(new BorderLayout(5, 5));
         panelMallaInteractiva.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -720,7 +723,44 @@ public class Menu {
 
         subTabs.addTab("Malla interactiva", panelMallaInteractiva);
 
-        // ============ 3) INSCRIPCIÓN CERTIFICACIONES ============
+        // Doble click en malla interactiva -> detalle asignatura
+        tablaMallaInt.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int fila = tablaMallaInt.getSelectedRow();
+                    if (fila == -1) return;
+
+                    String rut = txtRut.getText().trim();
+                    if (rut.isEmpty()) {
+                        JOptionPane.showMessageDialog(panelEst,
+                                "Ingrese un RUT y cargue los datos primero.",
+                                "Atención",
+                                JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+
+                    String nrc = (String) tablaMallaInt.getValueAt(fila, 0); // col 0 = NRC
+                    mostrarDetalleAsignaturaInteractiva(rut, nrc, panelEst);
+                }
+            }
+        });
+
+        // =====================================================
+        // 3) MALLA GRÁFICA (cajitas por semestre estilo malla UCN)
+        // =====================================================
+        JPanel panelMallaGraficaWrapper = new JPanel(new BorderLayout());
+        JScrollPane scrollMallaGrafica = new JScrollPane();
+        scrollMallaGrafica.setBorder(
+                BorderFactory.createTitledBorder("Malla gráfica por semestre")
+        );
+        panelMallaGraficaWrapper.add(scrollMallaGrafica, BorderLayout.CENTER);
+
+        subTabs.addTab("Malla gráfica", panelMallaGraficaWrapper);
+
+        // =====================================================
+        // 4) INSCRIPCIÓN CERTIFICACIONES
+        // =====================================================
         JPanel panelInscripcion = new JPanel(new BorderLayout(5, 5));
         panelInscripcion.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -728,7 +768,7 @@ public class Menu {
         areaCerts.setEditable(false);
         areaCerts.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane scrollCerts = new JScrollPane(areaCerts);
-        scrollCerts.setBorder(BorderFactory.createTitledBorder("Líneas / certificaciones disponibles"));
+        scrollCerts.setBorder(BorderFactory.createTitledBorder("Certificaciones"));
 
         JPanel panelInsBotones = new JPanel(new FlowLayout());
         JButton btnListarLineas = new JButton("Listar líneas");
@@ -746,7 +786,9 @@ public class Menu {
 
         subTabs.addTab("Inscripción certificaciones", panelInscripcion);
 
-        // ============ 4) SEGUIMIENTO ============
+        // =====================================================
+        // 5) SEGUIMIENTO / DASHBOARD
+        // =====================================================
         JPanel panelSeguimiento = new JPanel(new BorderLayout(5, 5));
         JTextArea areaDash = new JTextArea();
         areaDash.setEditable(false);
@@ -764,10 +806,10 @@ public class Menu {
         subTabs.addTab("Seguimiento", panelSeguimiento);
 
         // =====================================================
-        //                     LISTENERS
+        //                   LISTENERS
         // =====================================================
 
-        // Cargar perfil + malla normal
+        // Cargar perfil + mallas
         btnCargar.addActionListener(e -> {
             String rut = txtRut.getText().trim();
             if (rut.isEmpty()) {
@@ -794,6 +836,10 @@ public class Menu {
 
             // Malla completa con colores
             actualizarMallaParaRut(rut, modeloMalla);
+
+            // Malla gráfica estilo cajitas
+            JPanel panelGraf = crearMallaGrafica(rut);
+            scrollMallaGrafica.setViewportView(panelGraf);
         });
 
         // Promedio general
@@ -823,7 +869,7 @@ public class Menu {
             }
 
             Integer[] opciones = {1,2,3,4,5,6,7,8,9,10};
-            Integer semestre = (Integer) JOptionPane.showInputDialog(
+            Integer semestreSel = (Integer) JOptionPane.showInputDialog(
                     panelEst,
                     "Seleccione semestre:",
                     "Promedio por semestre",
@@ -832,11 +878,11 @@ public class Menu {
                     opciones,
                     opciones[0]);
 
-            if (semestre == null) return;
+            if (semestreSel == null) return;
 
-            double prom = sistema.calcularPromedioSemestre(rut, semestre);
+            double prom = sistema.calcularPromedioSemestre(rut, semestreSel);
             JOptionPane.showMessageDialog(panelEst,
-                    "Promedio del semestre " + semestre + ": " + prom);
+                    "Promedio del semestre " + semestreSel + ": " + prom);
         });
 
         // Malla interactiva: ver por semestre
