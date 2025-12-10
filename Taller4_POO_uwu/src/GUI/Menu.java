@@ -1050,7 +1050,46 @@ public class Menu {
             modeloMalla.addRow(fila);
         }
     }
- // ================= INSCRIPCIÓN A CERTIFICACIONES =================
+ // Malla SOLO de un semestre específico (para la malla interactiva)
+    private void actualizarMallaParaRutYSemestre(String rut,
+                                                 int semestreFiltro,
+                                                 javax.swing.table.DefaultTableModel modeloMalla) {
+        modeloMalla.setRowCount(0); // limpiar
+
+        java.util.ArrayList<dominio.Curso> cursos = sistema.getMallaCompleta(rut);
+        java.util.ArrayList<dominio.Nota> notas  = sistema.getNotasEstudiante(rut);
+
+        java.util.HashMap<String, dominio.Nota> mapaNotas = new java.util.HashMap<>();
+        for (dominio.Nota n : notas) {
+            mapaNotas.put(n.getCodigoAsignatura(), n);
+        }
+
+        for (dominio.Curso c : cursos) {
+            // filtramos por semestre
+            if (c.getSemestre() != semestreFiltro) continue;
+
+            dominio.Nota n = mapaNotas.get(c.getNrc());
+            String estado = "Pendiente";
+            Double nota   = null;
+
+            if (n != null) {
+                estado = n.getEstado();
+                nota   = n.getCalificacion();
+            }
+
+            Object[] fila = {
+                    c.getNrc(),
+                    c.getNombre(),
+                    c.getSemestre(),
+                    c.getCreditos(),
+                    (nota == null ? "-" : nota),
+                    estado
+            };
+            modeloMalla.addRow(fila);
+        }
+    }
+
+ // INSCRIPCIÓN A CERTIFICACIONES 
     private void gestionarInscripcionCertificacion(String rut, java.awt.Component parent) {
         // Lista de certificaciones disponibles
         java.util.ArrayList<dominio.Certificacion> lista = sistema.getCertificaciones();
