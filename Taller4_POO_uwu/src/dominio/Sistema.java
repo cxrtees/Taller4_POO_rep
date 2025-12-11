@@ -173,15 +173,7 @@ public class Sistema implements SistemaIn {
                 String linea = sc.nextLine().trim();
                 if (linea.isEmpty()) continue;
 
-                String[] p = linea.split(";");
-                // RUT;CódigoAsignatura;Calificación;Estado;Semestre
-                String rut          = p[0].trim();
-                String codAsig      = p[1].trim();
-                double calificacion = Double.parseDouble(p[2].trim());
-                String estado       = p[3].trim();
-                String semestre     = p[4].trim();
-
-                Nota n = new Nota(rut, codAsig, calificacion, estado, semestre);
+                Nota n = NotaFactory.crearDesdeLinea(linea);
                 notas.add(n);
             }
 
@@ -201,13 +193,8 @@ public class Sistema implements SistemaIn {
             while (sc.hasNextLine()) {
                 String linea = sc.nextLine().trim();
                 if (linea.isEmpty()) continue;
-
-                String[] p = linea.split(";");
-                // IDcert;NRCcurso
-                String idCert = p[0].trim();
-                String nrc    = p[1].trim();
-
-                AsignaturaCertificacion ac = new AsignaturaCertificacion(idCert, nrc);
+               
+                AsignaturaCertificacion ac = AsignaturaCertificacionFactory.crearDesdeLinea(linea);
                 asignaturasCertificaciones.add(ac);
             }
 
