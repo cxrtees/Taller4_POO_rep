@@ -639,6 +639,8 @@ public class Menu {
         // ---------- CENTRO: subtabs ----------
         JTabbedPane subTabs = new JTabbedPane();
         panelEst.add(subTabs, BorderLayout.CENTER);
+        vistaInscripcionCertificaciones(subTabs, txtRut);
+
 
         // =====================================================
         // 1) PERFIL + MALLA NORMAL (tabla completa con colores)
@@ -1427,6 +1429,175 @@ public class Menu {
 
      return panel;
  }
+//================== ESTUDIANTE: Inscripción a certificaciones ==================
+ 
+private void vistaInscripcionCertificaciones(JTabbedPane subTabs, JTextField txtRut) {
+
+  JPanel panel = new JPanel(new BorderLayout(10, 10));
+
+  // --------- TABLA DE LÍNEAS DE CERTIFICACIÓN ----------
+  String[] columnas = {"ID", "Nombre", "Descripción", "Créditos req.", "Años validez"};
+  JTable tablaCert = new JTable();
+  // Usamos tu método existente
+  refrescarTablaCertificaciones(tablaCert, columnas);
+
+  JScrollPane scrollTabla = new JScrollPane(tablaCert);
+  panel.add(scrollTabla, BorderLayout.CENTER);
+
+  // --------- PANEL DETALLE (requisitos / descripción) ----------
+  JTextArea areaDetalle = new JTextArea(6, 40);
+  areaDetalle.setEditable(false);
+  JScrollPane scrollDetalle = new JScrollPane(areaDetalle);
+  scrollDetalle.setBorder(
+          BorderFactory.createTitledBorder("Detalle / Requisitos de la certificación"));
+  panel.add(scrollDetalle, BorderLayout.SOUTH);
+
+  // Listener para mostrar detalle al seleccionar una fila
+  tablaCert.getSelectionModel().addListSelectionListener(e -> {
+      if (e.getValueIsAdjusting()) return;
+
+      int fila = tablaCert.getSelectedRow();
+      if (fila == -1) {
+          areaDetalle.setText("");
+          return;
+      }
+
+      String id = (String) tablaCert.getValueAt(fila, 0);
+      Certificacion c = sistema.buscarCertificacion(id);
+      if (c == null) {
+          areaDetalle.setText("");
+          return;
+      }
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("ID: ").append(c.getId()).append("\n");
+      sb.append("Nombre: ").append(c.getNombre()).append("\n\n");
+      sb.append("Descripción:\n").append(c.getDescripcion()).append("\n\n");
+      sb.append("Créditos requeridos: ").append(c.getCreditosRequeridos()).append("\n");
+      sb.append("Años de validez: ").append(c.getAñosValidez()).append("\n");
+
+      areaDetalle.setText(sb.toString());
+  });
+
+  // --------- BOTONES (arriba o abajo, como tú prefieras) ----------
+  JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.LEFT));
+  JButton btnVerReq = new JButton("Ver requisitos");
+  JButton btnInscribir = new JButton("Inscribirse");
+  JButton btnVerInscritas = new JButton("Ver inscritas");
+
+  panelBotones.add(btnVerReq);
+  panelBotones.add(btnInscribir);
+  panelBotones.add(btnVerInscritas);
+
+  panel.add(panelBotones, BorderLayout.NORTH);
+
+  // --------- VER REQUISITOS / DESCRIPCIÓN ----------
+  btnVerReq.addActionListener(e -> {
+      int fila = tablaCert.getSelectedRow();
+      if (fila == -1) {
+          JOptionPane.showMessageDialog(panel,
+                  "Selecciona una línea de certificación.",
+                  "Atención", JOptionPane.WARNING_MESSAGE);
+          return;
+      }
+
+      // Simplemente mostramos lo que ya está en el área de detalle
+      mostrarTextoEnDialogo(panel, "Requisitos y descripción", areaDetalle.getText());
+  });
+
+  // --------- INSCRIBIRSE (con validaciones y prerrequisitos) ----------
+  btnInscribir.addActionListener(e -> {
+      String rut = txtRut.getText().trim();
+      if (rut.isEmpty()) {
+          JOptionPane.showMessageDialog(panel,
+                  "Ingresa el RUT del estudiante y carga los datos primero.",
+                  "Atención", JOptionPane.WARNING_MESSAGE);
+          return;
+      }
+
+      int fila = tablaCert.getSelectedRow();
+      if (fila == -1) {
+          JOptionPane.showMessageDialog(panel,
+                  "Selecciona una línea de certificación.",
+                  "Atención", JOptionPane.WARNING_MESSAGE);
+          return;
+      }
+
+      String id = (String) tablaCert.getValueAt(fila, 0);
+
+      // 1) Validar prerrequisitos académicos
+      boolean cumple = sistema.verificarRequisitos(rut, id);
+      if (!cumple) {
+          JOptionPane.showMessageDialog(panel,
+                  "El estudiante NO cumple los requisitos académicos para esta certificación.",
+                  "No cumple requisitos",
+                  JOptionPane.WARNING_MESSAGE);
+          return;
+      }
+
+      // 2) Realizar inscripción
+      boolean ok = sistema.inscribirCertificacion(rut, id);
+      if (ok) {
+          JOptionPane.showMessageDialog(panel,
+                  "Inscripción realizada correctamente.");
+      } else {
+          JOptionPane.showMessageDialog(panel,
+                  "No se pudo realizar la inscripción.",
+                  "Error", JOptionPane.ERROR_MESSAGE);
+      }
+  });
+
+  // --------- VER CERTIFICACIONES INSCRITAS ----------
+  btnVerInscritas.addActionListener(e -> {
+      String rut = txtRut.getText().trim();
+      if (rut.isEmpty()) {
+          JOptionPane.showMessageDialog(panel,
+                  "Ingresa el RUT del estudiante primero.",
+                  "Atención", JOptionPane.WARNING_MESSAGE);
+          return;
+      }
+
+      java.util.ArrayList<RegistroCertificacion> lista =
+              sistema.getCertificacionesInscritas(rut);
+
+      if (lista.isEmpty()) {
+          JOptionPane.showMessageDialog(panel,
+                  "El estudiante no tiene certificaciones inscritas.",
+                  "Información", JOptionPane.INFORMATION_MESSAGE);
+          return;
+      }
+
+      String[] cols = {"ID Cert.", "Nombre", "Fecha", "Estado", "Progreso"};
+      Object[][] datos = new Object[lista.size()][cols.length];
+
+      int i = 0;
+      for (RegistroCertificacion r : lista) {
+          Certificacion c = sistema.buscarCertificacion(r.getIdCertificacion());
+          datos[i][0] = r.getIdCertificacion();
+          datos[i][1] = (c != null ? c.getNombre() : "-");
+          datos[i][2] = r.getFechaRegistro();
+          datos[i][3] = r.getEstado();
+          datos[i][4] = r.getProgreso() + "%";
+          i++;
+      }
+
+      JTable tabla = new JTable(datos, cols);
+      tabla.setDefaultEditor(Object.class, null);
+      JScrollPane sp = new JScrollPane(tabla);
+
+      mostrarTextoEnDialogo(panel, "Certificaciones inscritas", ""); // abre el diálogo
+      // Si prefieres, usa directamente JOptionPane:
+      // JOptionPane.showMessageDialog(panel, sp, "Certificaciones inscritas", JOptionPane.INFORMATION_MESSAGE);
+      JOptionPane.showMessageDialog(panel, sp,
+              "Certificaciones inscritas",
+              JOptionPane.INFORMATION_MESSAGE);
+  });
+
+  // Añadir pestaña al subTab de Estudiante
+  subTabs.addTab("Inscripción certificaciones", panel);
+}
+
+ 
 
 
 
