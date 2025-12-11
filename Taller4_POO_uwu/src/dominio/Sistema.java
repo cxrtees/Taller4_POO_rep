@@ -444,19 +444,44 @@ public class Sistema implements SistemaIn {
         return count == 0 ? 0 : suma / count;
     }
 
+   
     @Override
-    public double calcularPromedioSemestre(String rut, int semestre) {
+    public double calcularPromedioSemestre(String rut, int semestreBuscado) {
         double suma = 0;
         int count = 0;
+
         for (Nota n : notas) {
-            if (n.getRutEstudiante().equals(rut)
-                    && Integer.parseInt(n.getSemestre()) == semestre) {
+            if (!n.getRutEstudiante().equals(rut)) {
+                continue;
+            }
+
+            String semStr = n.getSemestre();   // ej: "2023-2"
+            int semNota;
+
+            try {
+                if (semStr.contains("-")) {
+                    // toma la parte DESPUÉS del '-'  → "2"
+                    String[] partes = semStr.split("-");
+                    semNota = Integer.parseInt(partes[1].trim());
+                } else {
+                    // por si en algún caso viene "2" a secas
+                    semNota = Integer.parseInt(semStr.trim());
+                }
+            } catch (NumberFormatException e) {
+                // si viene raro, lo saltamos
+                continue;
+            }
+
+            if (semNota == semestreBuscado) {
                 suma += n.getCalificacion();
                 count++;
             }
         }
-        return count == 0 ? 0 : suma / count;
+
+        return count == 0 ? 0.0 : suma / count;
     }
+
+
 
     @Override
     public boolean inscribirCertificacion(String rut, String idCertificacion) {
