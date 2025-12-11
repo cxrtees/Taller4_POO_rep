@@ -131,15 +131,7 @@ public class Sistema implements SistemaIn {
                 String linea = sc.nextLine().trim();
                 if (linea.isEmpty()) continue;
 
-                String[] p = linea.split(";");
-                // ID;Nombre;Descripción;RequisitosCreditos;ValidezAños
-                String id          = p[0].trim();
-                String nombre      = p[1].trim();
-                String descripcion = p[2].trim();
-                int creditosReq    = Integer.parseInt(p[3].trim());
-                int anosValidez    = Integer.parseInt(p[4].trim());
-
-                Certificacion c = new Certificacion(id, nombre, descripcion, creditosReq, anosValidez);
+                Certificacion c = CertificacionFactory.crearDesdeLinea(linea);
                 certificaciones.add(c);
             }
 
@@ -160,16 +152,7 @@ public class Sistema implements SistemaIn {
                 String linea = sc.nextLine().trim();
                 if (linea.isEmpty()) continue;
 
-                String[] p = linea.split(";");
-                // RUT;IDcert;FechaRegistro;Estado;Progreso
-                String rut           = p[0].trim();
-                String idCert        = p[1].trim();
-                String fechaRegistro = p[2].trim();
-                String estado        = p[3].trim();
-                double progreso      = Double.parseDouble(p[4].trim());
-
-                RegistroCertificacion r = new RegistroCertificacion(
-                        rut, idCert, fechaRegistro, estado, progreso);
+                RegistroCertificacion r  = RegistroCertificacionFactory.crearDesdeLinea(linea);
                 registros.add(r);
             }
 

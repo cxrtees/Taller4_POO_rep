@@ -2,7 +2,7 @@ package dominio;
 
 public class CursoFactory {
 	
-	// Crea un Curso a partir de una línea del archivo usuarios.txt
+	// Crea un Curso a partir de una línea del archivo cursos.txt
 	public static Curso crearDesdeLinea(String linea) {
 		String[] p = linea.split(";");
 			
