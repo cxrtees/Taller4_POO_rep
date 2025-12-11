@@ -891,7 +891,8 @@ public class Menu {
         });
 
 
-        // Seguimiento: dashboard
+         
+     // Seguimiento: dashboard
         btnVerInscripciones.addActionListener(e -> {
             String rut = txtRut.getText().trim();
             if (rut.isEmpty()) {
@@ -901,28 +902,73 @@ public class Menu {
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
+
             ArrayList<RegistroCertificacion> regs = sistema.getCertificacionesInscritas(rut);
             StringBuilder sb = new StringBuilder();
             sb.append("Dashboard de certificaciones del estudiante ").append(rut).append("\n\n");
-            
+
             if (regs.isEmpty()) {
-                sb.append("El estudiante no está inscrito en ninguna certificación.");
-            } else {
-                // usamos el VISITOR
-            	CertificacionVisitor visitor = new VisitorAccionesCertificacion();
-            	
-            	for (RegistroCertificacion r : regs) {
-            		Certificacion c = sistema.buscarCertificacion(r.getRutEstudiante());
-            		if (c == null) continue; 
-            		
-            		//Patrón visitor 
-            		String detalle = c.aceptar(r, visitor);
-            		sb.append(detalle);
-            	}
+                sb.append("El estudiante no está inscrito en ninguna certificación.\n");
+                areaDash.setText(sb.toString());
+                return;
             }
+
+            // ============================
+            // 1) RESUMEN DE CERTIFICACIONES
+            // ============================
+            sb.append("CERTIFICACIONES INSCRITAS\n");
+            sb.append("-------------------------\n");
+            for (RegistroCertificacion r : regs) {
+                Certificacion c = sistema.buscarCertificacion(r.getIdCertificacion());
+                String nombreCert = (c != null) ? c.getNombre() : r.getIdCertificacion();
+
+                sb.append("- ").append(nombreCert)
+                  .append(" (").append(r.getIdCertificacion()).append(")")
+                  .append(" | Estado: ").append(r.getEstado())
+                  .append(" | Progreso: ").append(r.getProgreso()).append("%\n");
+            }
+
+            // ============================
+            // 2) RAMOS FALTANTES POR CERTIFICACIÓN
+            // ============================
+            sb.append("\nASIGNATURAS FALTANTES PARA COMPLETAR CADA CERTIFICACIÓN\n");
+            sb.append("========================================================\n\n");
+
+            for (RegistroCertificacion r : regs) {
+                Certificacion c = sistema.buscarCertificacion(r.getIdCertificacion());
+                String nombreCert = (c != null) ? c.getNombre() : r.getIdCertificacion();
+
+                sb.append("· ").append(nombreCert)
+                  .append(" (").append(r.getIdCertificacion()).append(")\n");
+
+                // Si ya está completada, no tiene sentido mostrar ramos faltantes
+                if (r.getEstado().equalsIgnoreCase("COMPLETADA")) {
+                    sb.append("   - Certificación COMPLETADA (no hay ramos pendientes).\n\n");
+                    continue;
+                }
+
+                // Usamos tu método de Sistema para ver qué ramos faltan
+                ArrayList<Curso> faltantes =
+                        sistema.getRamosFaltantesCertificacion(rut, r.getIdCertificacion());
+
+                if (faltantes.isEmpty()) {
+                    sb.append("   - No hay ramos pendientes según los registros.\n\n");
+                } else {
+                    for (Curso cFal : faltantes) {
+                        sb.append("   - ")
+                          .append(cFal.getNcr()).append("  ")
+                          .append(cFal.getNombre())
+                          .append("  (Sem ").append(cFal.getSemestre())
+                          .append(", ").append(cFal.getCreditos())
+                          .append(" créditos)\n");
+                    }
+                    sb.append("\n");
+                }
+            }
+
             areaDash.setText(sb.toString());
         });
+
     }
 
     private void refrescarTablaCertificaciones(JTable tabla, String[] columnas) {
@@ -1385,6 +1431,7 @@ private void vistaInscripcionCertificaciones(JTabbedPane subTabs, JTextField txt
 
   // --------- INSCRIBIRSE (con validaciones y prerrequisitos) ----------
 //--------- INSCRIBIRSE (con validaciones y prerrequisitos) ----------
+//--------- INSCRIBIRSE (con validaciones y prerrequisitos) ----------
 btnInscribir.addActionListener(e -> {
    String rut = txtRut.getText().trim();
    if (rut.isEmpty()) {
@@ -1404,13 +1451,30 @@ btnInscribir.addActionListener(e -> {
 
    String id = (String) tablaCert.getValueAt(fila, 0);
 
+   // 0) Ver si YA está inscrito en esta certificación
+   ArrayList<RegistroCertificacion> regs = sistema.getCertificacionesInscritas(rut);
+   boolean yaInscrito = false;
+   for (RegistroCertificacion r : regs) {
+       if (r.getIdCertificacion().equals(id)) {
+           yaInscrito = true;
+           break;
+       }
+   }
+
+   if (yaInscrito) {
+       JOptionPane.showMessageDialog(panel,
+               "El estudiante ya está inscrito en esta certificación (" + id + ").",
+               "Ya inscrito",
+               JOptionPane.INFORMATION_MESSAGE);
+       return;
+   }
+
    // 1) Validar prerrequisitos académicos
    boolean cumple = sistema.verificarRequisitos(rut, id);
    if (!cumple) {
 
-       // ← aquí usamos tu método para listar ramos que faltan
-       ArrayList<Curso> faltantes =
-               sistema.getRamosFaltantesCertificacion(rut, id);
+       // 2) Obtener ramos faltantes usando tu método del Sistema
+       ArrayList<Curso> faltantes = sistema.getRamosFaltantesCertificacion(rut, id);
 
        StringBuilder sb = new StringBuilder();
        sb.append("El estudiante NO cumple los requisitos académicos.\n\n");
@@ -1422,18 +1486,16 @@ btnInscribir.addActionListener(e -> {
            for (Curso c : faltantes) {
                sb.append("- ").append(c.getNcr())
                  .append("  ").append(c.getNombre())
-                 .append(" (Sem ").append(c.getSemestre())
+                 .append("  (Sem ").append(c.getSemestre())
                  .append(", ").append(c.getCreditos()).append(" créditos)\n");
            }
        }
 
-       mostrarTextoEnDialogo(panel,
-               "No cumple requisitos",
-               sb.toString());
+       mostrarTextoEnDialogo(panel, "No cumple requisitos", sb.toString());
        return;
    }
 
-   // 2) Realizar inscripción
+   // 3) Si cumple requisitos → inscribir
    boolean ok = sistema.inscribirCertificacion(rut, id);
    if (ok) {
        JOptionPane.showMessageDialog(panel,
@@ -1444,6 +1506,7 @@ btnInscribir.addActionListener(e -> {
                "Error", JOptionPane.ERROR_MESSAGE);
    }
 });
+
 
 
   // --------- VER CERTIFICACIONES INSCRITAS ----------
