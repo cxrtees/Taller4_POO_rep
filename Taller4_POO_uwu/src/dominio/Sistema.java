@@ -550,6 +550,48 @@ public class Sistema implements SistemaIn {
         }
         return null;
     }
+ // Devuelve la lista de cursos que le faltan al estudiante
+ // para poder inscribir la certificación.
+ public ArrayList<Curso> getRamosFaltantesCertificacion(String rut, String idCertificacion) {
+
+     ArrayList<Curso> faltantes = new ArrayList<>();
+
+     // 1) NRC requeridos por esa certificación
+     ArrayList<String> nrcRequeridos = new ArrayList<>();
+     for (AsignaturaCertificacion ac : asignaturasCertificaciones) {
+         if (ac.getIdCertificacion().equals(idCertificacion)) {
+             nrcRequeridos.add(ac.getNrcCurso());
+         }
+     }
+
+     // 2) Por cada NRC requerido, ver si el estudiante lo tiene APROBADO
+     for (String nrc : nrcRequeridos) {
+         boolean aprobado = false;
+
+         for (Nota n : notas) {
+             if (n.getRutEstudiante().equals(rut)
+                     && n.getCodigoAsignatura().equals(nrc)
+                     && n.getCalificacion() >= 4.0) {
+                 aprobado = true;
+                 break;
+             }
+         }
+
+         // Si no está aprobado, lo agregamos a la lista de faltantes
+         if (!aprobado) {
+             // Buscar el curso para mostrar nombre, créditos, etc.
+             for (Curso c : cursos) {
+                 if (c.getNrc().equals(nrc)) {
+                     faltantes.add(c);
+                     break;
+                 }
+             }
+         }
+     }
+
+     return faltantes;
+ }
+
 
 }
 

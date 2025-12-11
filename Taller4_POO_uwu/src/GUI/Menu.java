@@ -971,7 +971,48 @@ public class Menu {
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
+
+            // Ver si se seleccionó una certificación
+            Certificacion certSel = certsList.getSelectedValue();
+            if (certSel == null) {
+                JOptionPane.showMessageDialog(panelEst,
+                        "Seleccione una certificación antes de inscribir.",
+                        "Atención",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            String idCert = certSel.getId();
+
+            // 1) Validar requisitos usando Sistema
+            boolean okReq = sistema.verificarRequisitos(rut, idCert);
+
+            if (!okReq) {
+                // 2) Obtener ramos faltantes
+                ArrayList<Curso> faltantes = sistema.getRamosFaltantesCertificacion(rut, idCert);
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("El estudiante NO cumple los prerrequisitos académicos.\n\n");
+                sb.append("Ramos faltantes para inscribir la certificación:\n\n");
+
+                for (Curso c : faltantes) {
+                    sb.append("- ").append(c.getNrc())
+                      .append("  ").append(c.getNombre())
+                      .append("  (Semestre ").append(c.getSemestre())
+                      .append(", ").append(c.getCreditos())
+                      .append(" créditos)\n");
+                }
+
+                mostrarTextoEnDialogo(panelEst,
+                        "Prerrequisitos no cumplidos",
+                        sb.toString());
+
+                return;
+            }
+
+            // 3) Si cumple requisitos → inscribir
             gestionarInscripcionCertificacion(rut, panelEst);
+
         });
 
         // Verificar requisitos
