@@ -69,4 +69,5 @@ public interface SistemaIn {
     public boolean inscribirCertificacion(String rut, String idCertificacion);
     public boolean verificarRequisitos(String rut, String idCertificacion);
     public ArrayList<RegistroCertificacion> getCertificacionesInscritas(String rut);
+    ArrayList<Curso> getRamosFaltantesCertificacion(String rut, String idCertificacion);
 }
