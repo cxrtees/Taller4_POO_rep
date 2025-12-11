@@ -1,9 +1,16 @@
 package GUI;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -1260,7 +1267,7 @@ public class Menu {
         dominio.Curso cursoSeleccionado = null;
 
         for (dominio.Curso c : cursos) {
-            if (c.getNrc().equals(nrc)) {   // ajusta si usas otro código
+            if (c.getNcr().equals(nrc)) {   // ajusta si usas otro código
                 cursoSeleccionado = c;
                 break;
             }
@@ -1286,7 +1293,7 @@ public class Menu {
         }
 
         // Prerrequisitos del curso (el último campo del txt de cursos)
-        String prereq = cursoSeleccionado.getPrereqText();  // ajusta nombre del getter si difiere
+        String prereq = cursoSeleccionado.getPrerrequisitos();  // ajusta nombre del getter si difiere
         if (prereq == null || prereq.trim().isEmpty()) {
             prereq = "Sin prerrequisitos registrados.";
         }
@@ -1294,7 +1301,7 @@ public class Menu {
         // "Ramos que abre": otros cursos que tienen este NRC en su lista de prerrequisitos
         java.util.ArrayList<dominio.Curso> abre = new java.util.ArrayList<>();
         for (dominio.Curso c : cursos) {
-            String txt = c.getPrereqText();
+            String txt = c.getPrerrequisitos();
             if (txt != null && !txt.isEmpty() && txt.contains(nrc)) {
                 abre.add(c);
             }
@@ -1306,7 +1313,7 @@ public class Menu {
         sb.append("ASIGNATURA\n");
         sb.append("==========\n");
         sb.append("Nombre   : ").append(cursoSeleccionado.getNombre()).append("\n");
-        sb.append("NRC      : ").append(cursoSeleccionado.getNrc()).append("\n");
+        sb.append("NRC      : ").append(cursoSeleccionado.getNcr()).append("\n");
         sb.append("Área     : ").append(cursoSeleccionado.getArea()).append("\n");
         sb.append("Semestre : ").append(cursoSeleccionado.getSemestre()).append("\n");
         sb.append("Créditos : ").append(cursoSeleccionado.getCreditos()).append("\n\n");
@@ -1332,7 +1339,7 @@ public class Menu {
             sb.append("- Ninguno registrado.\n");
         } else {
             for (dominio.Curso c : abre) {
-                sb.append("- ").append(c.getNrc())
+                sb.append("- ").append(c.getNcr())
                   .append(" : ").append(c.getNombre())
                   .append(" (sem ").append(c.getSemestre()).append(")\n");
             }
@@ -1341,6 +1348,86 @@ public class Menu {
         // Mostrar en diálogo con scroll
         mostrarTextoEnDialogo(parent, "Detalle de asignatura", sb.toString());
     }
+ // =======================================================
+ // MALLA GRÁFICA INTERACTIVA (cajitas por semestre)
+ // =======================================================
+ private JPanel crearMallaGrafica(String rut) {
+
+     JPanel panel = new JPanel();
+     panel.setLayout(new GridLayout(0, 1, 10, 10)); // una fila por semestre
+     panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+     ArrayList<Curso> cursos = sistema.getMallaCompleta(rut);
+     ArrayList<Nota> notas = sistema.getNotasEstudiante(rut);
+
+     if (cursos == null || cursos.isEmpty()) {
+         panel.add(new JLabel("No hay cursos disponibles para mostrar."));
+         return panel;
+     }
+
+     // Agrupar cursos por semestre
+     Map<Integer, ArrayList<Curso>> mapaSemestres = new HashMap<>();
+
+     for (Curso c : cursos) {
+         int sem = c.getSemestre();
+         mapaSemestres.putIfAbsent(sem, new ArrayList<>());
+         mapaSemestres.get(sem).add(c);
+     }
+
+     // Crear una sección por semestre
+     for (int semestre : mapaSemestres.keySet()) {
+
+         JPanel filaSem = new JPanel(new FlowLayout(FlowLayout.LEFT));
+         filaSem.setBorder(BorderFactory.createTitledBorder("Semestre " + semestre));
+
+         for (Curso c : mapaSemestres.get(semestre)) {
+
+             // Determinar estado del curso
+             String estado = "Pendiente";
+             double nota = 0;
+
+             for (Nota n : notas) {
+                 if (n.getCodigoAsignatura().equals(c.getNcr())) {
+                     nota = n.getCalificacion();
+                     estado = n.getEstado();
+                 }
+             }
+
+             // Crear cajita visual del curso
+             JPanel cajita = new JPanel();
+             cajita.setPreferredSize(new Dimension(180, 60));
+             cajita.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+
+             JLabel lbl = new JLabel("<html><b>" + c.getNombre() + "</b><br/>NRC: "
+                     + c.getNcr() + "<br/>" + estado + "</html>");
+             cajita.add(lbl);
+
+             // Colorear por estado
+             if (estado.equalsIgnoreCase("Aprobada")) {
+                 cajita.setBackground(new Color(135, 255, 135)); // verde
+             } else if (estado.equalsIgnoreCase("Reprobada")) {
+                 cajita.setBackground(new Color(255, 150, 150)); // rojo
+             } else {
+                 cajita.setBackground(new Color(230, 230, 255)); // celeste
+             }
+
+             // Hacer clic para ver detalle
+             cajita.addMouseListener(new MouseAdapter() {
+                 @Override
+                 public void mouseClicked(MouseEvent e) {
+                     mostrarDetalleAsignaturaInteractiva(rut, c.getNcr(), cajita);
+                 }
+             });
+
+             filaSem.add(cajita);
+         }
+
+         panel.add(filaSem);
+     }
+
+     return panel;
+ }
+
 
 
 
