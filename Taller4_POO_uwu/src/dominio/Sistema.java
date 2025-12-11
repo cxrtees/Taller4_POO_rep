@@ -450,5 +450,14 @@ public class Sistema implements SistemaIn {
         }
         return lista;
     }
+    private Curso buscarCursoPorNrc(String nrc) {
+        for (Curso c : cursos) {
+            if (c.getNcr().equals(nrc)) {
+                return c;
+            }
+        }
+        return null;
+    }
+
 }
 
