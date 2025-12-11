@@ -4,12 +4,16 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import logica.EstrategiaVerificacion;
 import logica.SistemaIn;
 
 public class Sistema implements SistemaIn {
 	
 	// SINGLETON
 	private static Sistema instancia;
+	
+	// STRATEGY
+	private EstrategiaVerificacion estrategiaVerificacion;
 	
 	// constructor priv para que nadie pueda hacer un "new Sistema()" desde fuera
 	private Sistema() {}	
@@ -20,6 +24,11 @@ public class Sistema implements SistemaIn {
 			instancia = new Sistema();
 		}
 		return instancia;
+	}
+	
+	// setter opcional por si alguien quiere cambiar la estrategia
+	public void setEstrategiaVerificacion(EstrategiaVerificacion estrategia) {
+		this.estrategiaVerificacion = estrategia;
 	}
 	
     // Rutas a los archivos de texto
@@ -131,15 +140,7 @@ public class Sistema implements SistemaIn {
                 String linea = sc.nextLine().trim();
                 if (linea.isEmpty()) continue;
 
-                String[] p = linea.split(";");
-                // ID;Nombre;Descripción;RequisitosCreditos;ValidezAños
-                String id          = p[0].trim();
-                String nombre      = p[1].trim();
-                String descripcion = p[2].trim();
-                int creditosReq    = Integer.parseInt(p[3].trim());
-                int anosValidez    = Integer.parseInt(p[4].trim());
-
-                Certificacion c = new Certificacion(id, nombre, descripcion, creditosReq, anosValidez);
+                Certificacion c = CertificacionFactory.crearDesdeLinea(linea);
                 certificaciones.add(c);
             }
 
@@ -160,16 +161,7 @@ public class Sistema implements SistemaIn {
                 String linea = sc.nextLine().trim();
                 if (linea.isEmpty()) continue;
 
-                String[] p = linea.split(";");
-                // RUT;IDcert;FechaRegistro;Estado;Progreso
-                String rut           = p[0].trim();
-                String idCert        = p[1].trim();
-                String fechaRegistro = p[2].trim();
-                String estado        = p[3].trim();
-                double progreso      = Double.parseDouble(p[4].trim());
-
-                RegistroCertificacion r = new RegistroCertificacion(
-                        rut, idCert, fechaRegistro, estado, progreso);
+                RegistroCertificacion r  = RegistroCertificacionFactory.crearDesdeLinea(linea);
                 registros.add(r);
             }
 
@@ -190,15 +182,7 @@ public class Sistema implements SistemaIn {
                 String linea = sc.nextLine().trim();
                 if (linea.isEmpty()) continue;
 
-                String[] p = linea.split(";");
-                // RUT;CódigoAsignatura;Calificación;Estado;Semestre
-                String rut          = p[0].trim();
-                String codAsig      = p[1].trim();
-                double calificacion = Double.parseDouble(p[2].trim());
-                String estado       = p[3].trim();
-                String semestre     = p[4].trim();
-
-                Nota n = new Nota(rut, codAsig, calificacion, estado, semestre);
+                Nota n = NotaFactory.crearDesdeLinea(linea);
                 notas.add(n);
             }
 
@@ -218,13 +202,8 @@ public class Sistema implements SistemaIn {
             while (sc.hasNextLine()) {
                 String linea = sc.nextLine().trim();
                 if (linea.isEmpty()) continue;
-
-                String[] p = linea.split(";");
-                // IDcert;NRCcurso
-                String idCert = p[0].trim();
-                String nrc    = p[1].trim();
-
-                AsignaturaCertificacion ac = new AsignaturaCertificacion(idCert, nrc);
+               
+                AsignaturaCertificacion ac = AsignaturaCertificacionFactory.crearDesdeLinea(linea);
                 asignaturasCertificaciones.add(ac);
             }
 
@@ -491,6 +470,7 @@ public class Sistema implements SistemaIn {
         return registros.add(r);
     }
 
+    @Override
     public boolean verificarRequisitos(String rut, String idCertificacion) {
 
         // 1) NRC requeridos por esa certificación
@@ -545,45 +525,46 @@ public class Sistema implements SistemaIn {
         }
         return null;
     }
- 
-    public ArrayList<Curso> getRamosFaltantesCertificacion(String rut, String idCertificacion) {
+ // Devuelve la lista de cursos que le faltan al estudiante
+ // para poder inscribir la certificación.
+ @Override
+ public ArrayList<Curso> getRamosFaltantesCertificacion(String rut, String idCertificacion) {
 
-        ArrayList<Curso> faltantes = new ArrayList<>();
+     ArrayList<Curso> faltantes = new ArrayList<>();
 
-        // 1) NRC requeridos por esa certificación
-        ArrayList<String> nrcRequeridos = new ArrayList<>();
-        for (AsignaturaCertificacion ac : asignaturasCertificaciones) {
-            if (ac.getIdCertificacion().equals(idCertificacion)) {
-                nrcRequeridos.add(ac.getNrcCurso());
-            }
-        }
+     // 1) NRC requeridos por esa certificación
+     ArrayList<String> nrcRequeridos = new ArrayList<>();
+     for (AsignaturaCertificacion ac : asignaturasCertificaciones) {
+         if (ac.getIdCertificacion().equals(idCertificacion)) {
+             nrcRequeridos.add(ac.getNrcCurso());
+         }
+     }
 
-        // 2) Por cada NRC requerido, ver si el estudiante lo tiene APROBADO
-        for (String nrc : nrcRequeridos) {
-            boolean aprobado = false;
+     // 2) Por cada NRC requerido, ver si el estudiante lo tiene APROBADO
+     for (String nrc : nrcRequeridos) {
+         boolean aprobado = false;
 
-            for (Nota n : notas) {
-                if (n.getRutEstudiante().equals(rut)
-                        && n.getCodigoAsignatura().equals(nrc)
-                        && n.getCalificacion() >= 4.0) {
-                    aprobado = true;
-                    break;
-                }
-            }
+         for (Nota n : notas) {
+             if (n.getRutEstudiante().equals(rut)
+                     && n.getCodigoAsignatura().equals(nrc)
+                     && n.getCalificacion() >= 4.0) {
+                 aprobado = true;
+                 break;
+             }
+         }
 
-            // Si no está aprobado, lo agregamos a la lista de faltantes
-            if (!aprobado) {
-                Curso c = buscarCursoPorNrc(nrc);
-                if (c != null) {
-                    faltantes.add(c);
-                }
-            }
-        }
+         // Si no está aprobado, lo agregamos a la lista de faltantes
+         if (!aprobado) {
+             Curso c = buscarCursoPorNrc(nrc);
+             if (c != null) {
+                 faltantes.add(c);
+             }
+         }
+     }
 
-        return faltantes;
-    }
+     return faltantes;
+ }
 
- 
 
 
 }

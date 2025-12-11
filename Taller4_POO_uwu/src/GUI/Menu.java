@@ -35,6 +35,8 @@ import dominio.Estudiante;
 import dominio.Nota;
 import dominio.RegistroCertificacion;
 import dominio.Usuario;
+import dominio.VisitorAccionesCertificacion;
+import logica.CertificacionVisitor;
 import logica.SistemaIn;
 
 public class Menu {
@@ -888,6 +890,7 @@ public class Menu {
             actualizarMallaParaRutYSemestre(rut, sem, modeloMallaInt);
         });
 
+
         // Seguimiento: dashboard
         btnVerInscripciones.addActionListener(e -> {
             String rut = txtRut.getText().trim();
@@ -898,20 +901,25 @@ public class Menu {
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
+            
             ArrayList<RegistroCertificacion> regs = sistema.getCertificacionesInscritas(rut);
             StringBuilder sb = new StringBuilder();
             sb.append("Dashboard de certificaciones del estudiante ").append(rut).append("\n\n");
+            
             if (regs.isEmpty()) {
                 sb.append("El estudiante no está inscrito en ninguna certificación.");
             } else {
-                for (RegistroCertificacion r : regs) {
-                    Certificacion c = sistema.buscarCertificacion(r.getIdCertificacion());
-                    String nombreCert = (c != null) ? c.getNombre() : r.getIdCertificacion();
-                    sb.append("- ").append(nombreCert)
-                      .append(" (").append(r.getIdCertificacion()).append(")")
-                      .append(" | Estado: ").append(r.getEstado())
-                      .append(" | Progreso: ").append(r.getProgreso()).append("%\n");
-                }
+                // usamos el VISITOR
+            	CertificacionVisitor visitor = new VisitorAccionesCertificacion();
+            	
+            	for (RegistroCertificacion r : regs) {
+            		Certificacion c = sistema.buscarCertificacion(r.getRutEstudiante());
+            		if (c == null) continue; 
+            		
+            		//Patrón visitor 
+            		String detalle = c.aceptar(r, visitor);
+            		sb.append(detalle);
+            	}
             }
             areaDash.setText(sb.toString());
         });

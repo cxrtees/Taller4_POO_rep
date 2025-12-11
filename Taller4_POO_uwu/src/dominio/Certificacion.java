@@ -1,5 +1,7 @@
 package dominio;
 
+import logica.CertificacionVisitor;
+
 public class Certificacion {
 	
 	private String id;
@@ -15,7 +17,11 @@ public class Certificacion {
 		this.creditosRequeridos = creditosRequeridos;
 		this.añosValidez = añosValidez;
 	}
-
+	
+	public String aceptar(RegistroCertificacion reg, CertificacionVisitor visitor) {
+		return visitor.visitarCertificacion(this, reg);
+	}
+	
 	public String getId() {
 		return id;
 	}
