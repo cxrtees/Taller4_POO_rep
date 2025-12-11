@@ -4,12 +4,16 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import logica.EstrategiaVerificacion;
 import logica.SistemaIn;
 
 public class Sistema implements SistemaIn {
 	
 	// SINGLETON
 	private static Sistema instancia;
+	
+	// STRATEGY
+	private EstrategiaVerificacion estrategiaVerificacion;
 	
 	// constructor priv para que nadie pueda hacer un "new Sistema()" desde fuera
 	private Sistema() {}	
@@ -20,6 +24,11 @@ public class Sistema implements SistemaIn {
 			instancia = new Sistema();
 		}
 		return instancia;
+	}
+	
+	// setter opcional por si alguien quiere cambiar la estrategia
+	public void setEstrategiaVerificacion(EstrategiaVerificacion estrategia) {
+		this.estrategiaVerificacion = estrategia;
 	}
 	
     // Rutas a los archivos de texto
@@ -462,45 +471,7 @@ public class Sistema implements SistemaIn {
     }
 
     public boolean verificarRequisitos(String rut, String idCertificacion) {
-
-        // 1. Buscar la certificación
-        Certificacion cert = buscarCertificacion(idCertificacion);
-        if (cert == null) {
-            return false;
-        }
-
-        int creditosRequeridos = cert.getCreditosRequeridos();
-
-        ArrayList<String> nrcAsociados = new ArrayList<>();
-        for (AsignaturaCertificacion ac : asignaturasCertificaciones) {
-            if (ac.getIdCertificacion().equals(idCertificacion)) {
-                nrcAsociados.add(ac.getNrcCurso());
-            }
-        }
-
-        if (nrcAsociados.isEmpty()) {
-            return true;
-        }
-
-        int creditosAprobados = 0;
-
-        for (Nota n : notas) {
-            if (!n.getRutEstudiante().equals(rut)) {
-                continue;
-            }
-
-            if (!nrcAsociados.contains(n.getCodigoAsignatura())) {
-                continue;
-            }
-
-            if (n.getCalificacion() >= 4.0) {
-                Curso c = buscarCursoPorNrc(n.getCodigoAsignatura());
-                if (c != null) {
-                    creditosAprobados += c.getCreditos();
-                }
-            }
-        }
-        return creditosAprobados >= creditosRequeridos;
+        return estrategiaVerificacion.verificar(rut, idCertificacion);
     }
 
 
