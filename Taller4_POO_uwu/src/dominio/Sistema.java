@@ -493,46 +493,41 @@ public class Sistema implements SistemaIn {
 
     public boolean verificarRequisitos(String rut, String idCertificacion) {
 
-        // 1. Buscar la certificación
-        Certificacion cert = buscarCertificacion(idCertificacion);
-        if (cert == null) {
-            return false;
-        }
-
-        int creditosRequeridos = cert.getCreditosRequeridos();
-
-        ArrayList<String> nrcAsociados = new ArrayList<>();
+        // 1) NRC requeridos por esa certificación
+        ArrayList<String> nrcRequeridos = new ArrayList<>();
         for (AsignaturaCertificacion ac : asignaturasCertificaciones) {
             if (ac.getIdCertificacion().equals(idCertificacion)) {
-                nrcAsociados.add(ac.getNrcCurso());
+                nrcRequeridos.add(ac.getNrcCurso());
             }
         }
 
-        if (nrcAsociados.isEmpty()) {
+        // Si no hay ramos configurados para esa línea, la dejamos pasar
+        if (nrcRequeridos.isEmpty()) {
             return true;
         }
 
-        int creditosAprobados = 0;
+        // 2) Para cada NRC requerido, ver si el estudiante lo tiene APROBADO
+        for (String nrc : nrcRequeridos) {
+            boolean aprobado = false;
 
-        for (Nota n : notas) {
-            if (!n.getRutEstudiante().equals(rut)) {
-                continue;
-            }
-
-            if (!nrcAsociados.contains(n.getCodigoAsignatura())) {
-                continue;
-            }
-
-            if (n.getCalificacion() >= 4.0) {
-                Curso c = buscarCursoPorNrc(n.getCodigoAsignatura());
-                if (c != null) {
-                    creditosAprobados += c.getCreditos();
+            for (Nota n : notas) {
+                if (n.getRutEstudiante().equals(rut)
+                        && n.getCodigoAsignatura().equals(nrc)
+                        && n.getCalificacion() >= 4.0) {
+                    aprobado = true;
+                    break;
                 }
             }
-        }
-        return creditosAprobados >= creditosRequeridos;
-    }
 
+            // Si encontramos UN ramo requerido que NO esté aprobado → no cumple
+            if (!aprobado) {
+                return false;
+            }
+        }
+
+        // Si todos los ramos requeridos están aprobados → cumple requisitos
+        return true;
+    }
 
     @Override
     public ArrayList<RegistroCertificacion> getCertificacionesInscritas(String rut) {
@@ -550,47 +545,45 @@ public class Sistema implements SistemaIn {
         }
         return null;
     }
- // Devuelve la lista de cursos que le faltan al estudiante
- // para poder inscribir la certificación.
- public ArrayList<Curso> getRamosFaltantesCertificacion(String rut, String idCertificacion) {
+ 
+    public ArrayList<Curso> getRamosFaltantesCertificacion(String rut, String idCertificacion) {
 
-     ArrayList<Curso> faltantes = new ArrayList<>();
+        ArrayList<Curso> faltantes = new ArrayList<>();
 
-     // 1) NRC requeridos por esa certificación
-     ArrayList<String> nrcRequeridos = new ArrayList<>();
-     for (AsignaturaCertificacion ac : asignaturasCertificaciones) {
-         if (ac.getIdCertificacion().equals(idCertificacion)) {
-             nrcRequeridos.add(ac.getNrcCurso());
-         }
-     }
+        // 1) NRC requeridos por esa certificación
+        ArrayList<String> nrcRequeridos = new ArrayList<>();
+        for (AsignaturaCertificacion ac : asignaturasCertificaciones) {
+            if (ac.getIdCertificacion().equals(idCertificacion)) {
+                nrcRequeridos.add(ac.getNrcCurso());
+            }
+        }
 
-     // 2) Por cada NRC requerido, ver si el estudiante lo tiene APROBADO
-     for (String nrc : nrcRequeridos) {
-         boolean aprobado = false;
+        // 2) Por cada NRC requerido, ver si el estudiante lo tiene APROBADO
+        for (String nrc : nrcRequeridos) {
+            boolean aprobado = false;
 
-         for (Nota n : notas) {
-             if (n.getRutEstudiante().equals(rut)
-                     && n.getCodigoAsignatura().equals(nrc)
-                     && n.getCalificacion() >= 4.0) {
-                 aprobado = true;
-                 break;
-             }
-         }
+            for (Nota n : notas) {
+                if (n.getRutEstudiante().equals(rut)
+                        && n.getCodigoAsignatura().equals(nrc)
+                        && n.getCalificacion() >= 4.0) {
+                    aprobado = true;
+                    break;
+                }
+            }
 
-         // Si no está aprobado, lo agregamos a la lista de faltantes
-         if (!aprobado) {
-             // Buscar el curso para mostrar nombre, créditos, etc.
-             for (Curso c : cursos) {
-                 if (c.getNrc().equals(nrc)) {
-                     faltantes.add(c);
-                     break;
-                 }
-             }
-         }
-     }
+            // Si no está aprobado, lo agregamos a la lista de faltantes
+            if (!aprobado) {
+                Curso c = buscarCursoPorNrc(nrc);
+                if (c != null) {
+                    faltantes.add(c);
+                }
+            }
+        }
 
-     return faltantes;
- }
+        return faltantes;
+    }
+
+ 
 
 
 }
