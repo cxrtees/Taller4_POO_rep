@@ -491,11 +491,48 @@ public class Sistema implements SistemaIn {
         return registros.add(r);
     }
 
-    @Override
     public boolean verificarRequisitos(String rut, String idCertificacion) {
-        // Lógica real de requisitos la puedes implementar después
-        return true;
+
+        // 1. Buscar la certificación
+        Certificacion cert = buscarCertificacion(idCertificacion);
+        if (cert == null) {
+            return false;
+        }
+
+        int creditosRequeridos = cert.getCreditosRequeridos();
+
+        ArrayList<String> nrcAsociados = new ArrayList<>();
+        for (AsignaturaCertificacion ac : asignaturasCertificaciones) {
+            if (ac.getIdCertificacion().equals(idCertificacion)) {
+                nrcAsociados.add(ac.getNrcCurso());
+            }
+        }
+
+        if (nrcAsociados.isEmpty()) {
+            return true;
+        }
+
+        int creditosAprobados = 0;
+
+        for (Nota n : notas) {
+            if (!n.getRutEstudiante().equals(rut)) {
+                continue;
+            }
+
+            if (!nrcAsociados.contains(n.getCodigoAsignatura())) {
+                continue;
+            }
+
+            if (n.getCalificacion() >= 4.0) {
+                Curso c = buscarCursoPorNrc(n.getCodigoAsignatura());
+                if (c != null) {
+                    creditosAprobados += c.getCreditos();
+                }
+            }
+        }
+        return creditosAprobados >= creditosRequeridos;
     }
+
 
     @Override
     public ArrayList<RegistroCertificacion> getCertificacionesInscritas(String rut) {
