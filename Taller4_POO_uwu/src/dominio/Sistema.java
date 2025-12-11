@@ -346,12 +346,42 @@ public class Sistema implements SistemaIn {
         return count;
     }
 
-    @Override
+  
     public ArrayList<Curso> obtenerAsignaturasCriticas(String idCertificacion) {
-        // Aquí puedes después aplicar tu lógica real de "asignatura crítica"
         ArrayList<Curso> criticas = new ArrayList<>();
+
+        // 1. Buscar todos los cursos asociados a esa certificación
+        for (AsignaturaCertificacion ac : asignaturasCertificaciones) {
+            if (!ac.getIdCertificacion().equals(idCertificacion)) continue;
+
+            Curso curso = buscarCursoPorNrc(ac.getNrcCurso());
+            if (curso == null) continue;
+
+            // 2. Mirar las notas de ese curso
+            int total = 0;
+            int reprobados = 0;
+
+            for (Nota n : notas) {
+                if (n.getCodigoAsignatura().equals(curso.getNcr())) {
+                    total++;
+                    if (n.getCalificacion() < 4.0) {
+                        reprobados++;
+                    }
+                }
+            }
+
+            // 3. Si tiene muchas reprobaciones, lo marcamos como "crítico"
+            if (total > 0) {
+                double porcentajeReprob = (double) reprobados / total;
+                if (porcentajeReprob >= 0.4) { // 40% o más reprobados
+                    criticas.add(curso);
+                }
+            }
+        }
+
         return criticas;
     }
+
 
     @Override
     public ArrayList<Estudiante> obtenerPerfilesDeCertificacion(String idCertificacion) {
