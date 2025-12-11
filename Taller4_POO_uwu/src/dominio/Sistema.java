@@ -552,6 +552,7 @@ public class Sistema implements SistemaIn {
     }
  // Devuelve la lista de cursos que le faltan al estudiante
  // para poder inscribir la certificación.
+ @Override   
  public ArrayList<Curso> getRamosFaltantesCertificacion(String rut, String idCertificacion) {
 
      ArrayList<Curso> faltantes = new ArrayList<>();
@@ -581,7 +582,7 @@ public class Sistema implements SistemaIn {
          if (!aprobado) {
              // Buscar el curso para mostrar nombre, créditos, etc.
              for (Curso c : cursos) {
-                 if (c.getNrc().equals(nrc)) {
+                 if (c.getNcr().equals(nrc)) {
                      faltantes.add(c);
                      break;
                  }
