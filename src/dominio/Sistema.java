@@ -1,5 +1,6 @@
 package dominio;
-
+//Catalina Isidora Rojas Macaya - 21.953.080-3 - ICCI
+//Benjamín Ismael Cortés Acuña - 21.890.703-2 - ICCI
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
