@@ -4,6 +4,13 @@ package dominio;
 public class EstudianteFactory {
 	
 	// Crea un Estudiante a partir de una línea del archivo estudiantes.txt
+	/**
+	 * Crea una instancia del objeto correspondiente a partir de una línea de texto
+	 * leída desde un archivo de datos.
+	 *
+	 * @param linea línea del archivo con los datos separados por ';'
+	 * @return objeto creado a partir de la línea
+	 */
 	public static Estudiante crearDesdeLinea(String linea) {
 		String[] p = linea.split(";");
 			

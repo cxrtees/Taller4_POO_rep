@@ -4,6 +4,13 @@ package dominio;
 public class UsuarioFactory {
 	
 	// Crea un Usuario a partir de una línea del archivo usuarios.txt
+	/**
+	 * Crea una instancia del objeto correspondiente a partir de una línea de texto
+	 * leída desde un archivo de datos.
+	 *
+	 * @param linea línea del archivo con los datos separados por ';'
+	 * @return objeto creado a partir de la línea
+	 */
 	public static Usuario crearDesdeLinea(String linea) {
 		String[] p = linea.split(";");
 		

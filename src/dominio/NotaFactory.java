@@ -3,6 +3,13 @@ package dominio;
 //Benjamín Ismael Cortés Acuña - 21.890.703-2 - ICCI
 public class NotaFactory {
 	// Crea una Nota a partir de una línea del archivo notas.txt
+	/**
+	 * Crea una instancia del objeto correspondiente a partir de una línea de texto
+	 * leída desde un archivo de datos.
+	 *
+	 * @param linea línea del archivo con los datos separados por ';'
+	 * @return objeto creado a partir de la línea
+	 */
 	public static Nota crearDesdeLinea(String linea) {
 		String[] p = linea.split(";");
 				
