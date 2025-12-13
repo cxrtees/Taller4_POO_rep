@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"m":"Taller4_POO_uwu","l":"dominio"},{"m":"Taller4_POO_uwu","l":"GUI"},{"m":"Taller4_POO_uwu","l":"logica"}];updateSearchResults();
