@@ -2,6 +2,11 @@ package dominio;
 //Catalina Isidora Rojas Macaya - 21.953.080-3 - ICCI
 //Benjamín Ismael Cortés Acuña - 21.890.703-2 - ICCI
 import logica.CertificacionVisitor;
+/**
+ * Visitor concreto que genera recomendaciones y resumen de estado/progreso
+ * de una certificación según su nivel (básica/intermedia/avanzada) y el registro
+ * del estudiante.
+ */
 
 
 public class VisitorAccionesCertificacion implements CertificacionVisitor{

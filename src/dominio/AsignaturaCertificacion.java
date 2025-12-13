@@ -1,4 +1,11 @@
 package dominio;
+/**
+ * Representa la relación entre una certificación y una asignatura (curso) requerida.
+ * Vincula el id de la certificación con el NRC/código del curso asociado.
+ *
+ * <p>Se utiliza para determinar qué ramos pertenecen a una certificación, verificar
+ * requisitos y calcular ramos faltantes.
+ */
 
 public class AsignaturaCertificacion {
 	

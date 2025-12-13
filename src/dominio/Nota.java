@@ -1,5 +1,14 @@
 package dominio;
 
+/**
+ * Representa una calificación asociada a un estudiante en una asignatura.
+ * Guarda el rut del estudiante, el código/NRC de la asignatura, la calificación,
+ * el estado (aprobada/reprobada/cursando/etc.) y el semestre cursado.
+ *
+ * <p>Permite calcular promedios, determinar asignaturas aprobadas y verificar
+ * requisitos académicos para certificaciones.
+ */
+
 public class Nota {
 
 	private String rutEstudiante;

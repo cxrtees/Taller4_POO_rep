@@ -1,6 +1,14 @@
 package dominio;
 //Catalina Isidora Rojas Macaya - 21.953.080-3 - ICCI
 //Benjamín Ismael Cortés Acuña - 21.890.703-2 - ICCI
+/**
+ * Representa a un estudiante dentro del sistema AcademiCore.
+ * Contiene datos personales y académicos base (rut, nombre, carrera, semestre y correo).
+ *
+ * <p>Se usa para consultas de perfil, visualización de malla, seguimiento de certificaciones
+ * y cálculo de promedios.
+ */
+
 public class Estudiante {
 	
 	private String rut;

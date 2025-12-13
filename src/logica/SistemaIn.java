@@ -3,6 +3,13 @@ package logica;
 //Benjamín Ismael Cortés Acuña - 21.890.703-2 - ICCI
 import java.util.ArrayList;
 import dominio.*;
+/**
+ * Interfaz que define los servicios públicos del sistema AcademiCore.
+ * Agrupa las operaciones disponibles para los distintos perfiles
+ * (Administrador, Coordinador y Estudiante), incluyendo carga inicial de datos,
+ * gestión de cuentas, consultas y métricas.
+ *
+ */
 
 public interface SistemaIn {
 

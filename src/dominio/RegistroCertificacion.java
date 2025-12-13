@@ -1,5 +1,13 @@
 package dominio;
 
+/**
+ * Representa la inscripción/registro de un estudiante en una certificación.
+ * Contiene el rut del estudiante, el id de la certificación, fecha de registro,
+ * estado y porcentaje de progreso.
+ *
+ * <p>Se usa para seguimiento, generación de certificados, estadísticas y dashboard.
+ */
+
 public class RegistroCertificacion {
 
 	private String rutEstudiante;

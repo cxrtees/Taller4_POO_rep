@@ -1,6 +1,15 @@
 package dominio;
 //Catalina Isidora Rojas Macaya - 21.953.080-3 - ICCI
 //Benjamín Ismael Cortés Acuña - 21.890.703-2 - ICCI
+/**
+ * Representa una cuenta de usuario del sistema.
+ * Contiene credenciales y datos de perfil necesarios para operar en el sistema
+ * (por ejemplo rol y área / información extra).
+ *
+ * <p>Se utiliza principalmente en operaciones administrativas (CRUD) y autenticación
+ * dentro de la aplicación.
+ */
+
 public class Usuario {
 	
 	private String nombreUsuario;

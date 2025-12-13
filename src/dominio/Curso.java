@@ -1,6 +1,14 @@
 package dominio;
 //Catalina Isidora Rojas Macaya - 21.953.080-3 - ICCI
 //Benjamín Ismael Cortés Acuña - 21.890.703-2 - ICCI
+/**
+ * Representa una asignatura/curso de la malla curricular.
+ * Incluye identificador (NRC/código), nombre, semestre, créditos, área y prerrequisitos en texto.
+ *
+ * <p>Se usa para construir la malla del estudiante, calcular créditos aprobados,
+ * listar asignaturas asociadas a certificaciones y detectar ramos críticos.
+ */
+
 public class Curso {
 	
 	

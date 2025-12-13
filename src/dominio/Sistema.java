@@ -1,6 +1,20 @@
 package dominio;
 //Catalina Isidora Rojas Macaya - 21.953.080-3 - ICCI
 //Benjamín Ismael Cortés Acuña - 21.890.703-2 - ICCI
+/**
+ * Clase principal del sistema AcademiCore.
+ * Centraliza la lógica de negocio, gestiona las colecciones cargadas desde archivos
+ * (usuarios, estudiantes, cursos, certificaciones, registros, notas y relaciones)
+ * y expone los servicios definidos por {@link logica.SistemaIn}.
+ *  *
+ * <p>Patrones aplicados:
+ * <ul>
+ *   <li><b>Singleton</b>: asegura una única instancia mediante {@code getInstancia()}.</li>
+ *   <li><b>Strategy</b>: permite cambiar la forma de verificación de requisitos usando
+ *       {@link logica.EstrategiaVerificacion}.</li>
+ * </ul>
+ * 
+ */
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -20,6 +34,13 @@ public class Sistema implements SistemaIn {
 	private Sistema() {}	
 	
 	// método estático de acceso global 
+	/**
+	 * Retorna la única instancia del sistema (Singleton).
+	 * Si no existe, la crea de forma perezosa (lazy initialization).
+	 *
+	 * @return instancia única de {@code Sistema}.
+	 */
+
 	public static Sistema getInstancia() {
 		if (instancia == null) {
 			instancia = new Sistema();
@@ -28,6 +49,12 @@ public class Sistema implements SistemaIn {
 	}
 	
 	// setter opcional por si alguien quiere cambiar la estrategia
+	/**
+	 * Define la estrategia de verificación académica a utilizar (Strategy).
+	 * Permite cambiar la lógica de validación sin modificar el sistema.
+	 *
+	 * @param estrategia estrategia a utilizar para verificar requisitos.
+	 */
 	public void setEstrategiaVerificacion(EstrategiaVerificacion estrategia) {
 		this.estrategiaVerificacion = estrategia;
 	}
@@ -50,19 +77,48 @@ public class Sistema implements SistemaIn {
     private ArrayList<Nota> notas = new ArrayList<>();
     private ArrayList<AsignaturaCertificacion> asignaturasCertificaciones = new ArrayList<>();
 
+    /**
+     * Inicializa el sistema cargando todos los datos desde los archivos de texto.
+     * Carga usuarios, estudiantes, cursos, certificaciones, registros, notas y asignaturas por certificación.
+     */
     @Override
     public void iniciarSistema() {
-
+    	/**
+    	 * Carga la lista de usuarios desde el archivo correspondiente.
+    	 * Limpia la lista actual y luego agrega los usuarios leídos.
+    	 */
         cargarUsuarios();
+        /**
+         * Carga la lista de estudiantes desde el archivo correspondiente.
+         * Limpia la lista actual y luego agrega los estudiantes leídos.
+         */
         cargarEstudiantes();
+        /**
+         * Carga la lista de cursos desde el archivo correspondiente.
+         * Limpia la lista actual y luego agrega los cursos leídos.
+         */
         cargarCursos();
+        /**
+         * Carga la lista de certificaciones desde el archivo correspondiente.
+         * Limpia la lista actual y luego agrega las certificaciones leídas.
+         */
         cargarCertificaciones();
+        /**
+         * Carga la lista de registros de certificación (inscripciones) desde el archivo correspondiente.
+         * Limpia la lista actual y luego agrega los registros leídos.
+         */
         cargarRegistros();
+        /**
+         * Carga la lista de notas desde el archivo correspondiente.
+         * Limpia la lista actual y luego agrega las notas leídas.
+         */
         cargarNotas();
+        /**
+         * Carga las relaciones entre certificaciones y cursos requeridos desde el archivo correspondiente.
+         * Limpia la lista actual y luego agrega las relaciones leídas.
+         */
         cargarAsignaturas();
 
-        // Cuando tengas GUI:
-        // new gui.VentanaLogin(this).setVisible(true);
     }
 
     //   CARGA DE ARCHIVOS (Scanner)

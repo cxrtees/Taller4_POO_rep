@@ -4,6 +4,10 @@ package dominio;
 import GUI.Menu;
 import dominio.Sistema;
 import logica.SistemaIn;
+/**
+ * Punto de entrada de la aplicación.
+ * Inicializa el sistema (lógica/dominio) y lanza la interfaz gráfica principal.
+ */
 
 public class App {
 

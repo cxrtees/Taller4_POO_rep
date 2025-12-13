@@ -1,6 +1,13 @@
 package dominio;
 //Catalina Isidora Rojas Macaya - 21.953.080-3 - ICCI
 //Benjamín Ismael Cortés Acuña - 21.890.703-2 - ICCI
+/**
+ * Estrategia concreta de verificación basada en créditos aprobados.
+ * Calcula los créditos del estudiante considerando únicamente los cursos
+ * asociados a una certificación y aprobados con nota >= 4.0, comparándolos
+ * con los créditos requeridos por la certificación.
+ */
+
 import java.util.ArrayList;
 
 import logica.EstrategiaVerificacion;

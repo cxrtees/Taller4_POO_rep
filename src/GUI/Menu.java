@@ -1,6 +1,21 @@
 package GUI;
 //Catalina Isidora Rojas Macaya - 21.953.080-3 - ICCI
 //Benjamín Ismael Cortés Acuña - 21.890.703-2 - ICCI
+
+/**
+ * Interfaz gráfica principal de AcademiCore.
+ * Construye las vistas de Administrador, Coordinador y Estudiante usando Swing,
+ * y consume las operaciones del sistema mediante la interfaz {@link logica.SistemaIn}
+ * para mantener desacoplada la GUI de la implementación concreta del sistema.
+ *
+ * <p>Incluye funcionalidades como:
+ * <ul>
+ *   <li>CRUD de usuarios (Administrador).</li>
+ *   <li>Gestión y métricas de certificaciones (Coordinador).</li>
+ *   <li>Visualización de perfil, malla, promedios e inscripción a certificaciones (Estudiante).</li>
+ * </ul>
+ */
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
