@@ -23,9 +23,9 @@ El proyecto fue desarrollado aplicando Programación Orientada a Objetos y patro
 
 ## Integrantes 
 
-Catalina Rojas Macaya | 21.953.080-3 | @Lncata
+Catalina Isidora Rojas Macaya | 21.953.080-3 | @Lncata
 
-Benjamín Cortés Acuña | 21.890.703-2 | @cxrtees
+Benjamín Ismael Cortés Acuña | 21.890.703-2 | @cxrtees
 
 ##  Estructura del proyecto
 
