@@ -298,12 +298,24 @@ public class Sistema implements SistemaIn {
         return asignaturasCertificaciones;
     }
 //admi
-
+    
+    /**
+     * Crea una nueva cuenta de usuario en el sistema.
+     *
+     * @param u usuario a agregar.
+     * @return {@code true} si se agregó correctamente; {@code false} en caso contrario.
+     */
     @Override
     public boolean crearCuenta(Usuario u) {
         return usuarios.add(u);
     }
-
+    
+    /**
+     * Modifica los datos de una cuenta existente, identificándola por su nombre de usuario.
+     *
+     * @param u usuario con los datos actualizados.
+     * @return {@code true} si se modificó; {@code false} si no se encontró el usuario.
+     */
     @Override
     public boolean modificarCuenta(Usuario u) {
         for (int i = 0; i < usuarios.size(); i++) {
@@ -314,12 +326,24 @@ public class Sistema implements SistemaIn {
         }
         return false;
     }
-
+    
+    /**
+     * Elimina una cuenta de usuario según su nombre de usuario.
+     *
+     * @param nombreUsuario nombre de usuario a eliminar.
+     * @return {@code true} si se eliminó; {@code false} si no existía.
+     */
     @Override
     public boolean eliminarCuenta(String nombreUsuario) {
         return usuarios.removeIf(u -> u.getNombreUsuario().equals(nombreUsuario));
     }
-
+    
+    /**
+     * Restablece la contraseña de un usuario a un valor por defecto.
+     *
+     * @param nombreUsuario nombre de usuario al que se le restablece la contraseña.
+     * @return {@code true} si se restableció; {@code false} si no se encontró el usuario.
+     */
     @Override
     public boolean restablecerContrasena(String nombreUsuario) {
         for (Usuario u : usuarios) {
@@ -330,14 +354,25 @@ public class Sistema implements SistemaIn {
         }
         return false;
     }
-
+    
+    /**
+     * Retorna la lista de usuarios del sistema.
+     *
+     * @return lista de usuarios cargados.
+     */
     @Override
     public ArrayList<Usuario> getUsuarios() {
         return usuarios;
     }
 
     // ---------- COORDINADOR ----------
-
+    
+    /**
+     * Busca una certificación por su identificador.
+     *
+     * @param id id de la certificación.
+     * @return la certificación encontrada o {@code null} si no existe.
+     */
     @Override
     public Certificacion buscarCertificacion(String id) {
         for (Certificacion c : certificaciones) {
@@ -345,7 +380,13 @@ public class Sistema implements SistemaIn {
         }
         return null;
     }
-
+    
+    /**
+     * Modifica una certificación existente reemplazándola por una nueva versión (misma id).
+     *
+     * @param c certificación con valores actualizados.
+     * @return {@code true} si se modificó; {@code false} si no se encontró la certificación.
+     */
     @Override
     public boolean modificarLineaCertificacion(Certificacion c) {
         for (int i = 0; i < certificaciones.size(); i++) {
@@ -356,12 +397,23 @@ public class Sistema implements SistemaIn {
         }
         return false;
     }
-
+    
+    /**
+     * Retorna la lista de certificaciones disponibles.
+     *
+     * @return lista de certificaciones.
+     */
     @Override
     public ArrayList<Certificacion> getCertificaciones() {
         return certificaciones;
     }
-
+    
+    /**
+     * Obtiene los registros (inscripciones) asociados a una certificación.
+     *
+     * @param idCertificacion id de la certificación.
+     * @return lista de registros de esa certificación.
+     */
     @Override
     public ArrayList<RegistroCertificacion> getRegistrosCertificacion(String idCertificacion) {
         ArrayList<RegistroCertificacion> lista = new ArrayList<>();
@@ -372,7 +424,13 @@ public class Sistema implements SistemaIn {
         }
         return lista;
     }
-
+    
+    /**
+     * Cuenta cuántos estudiantes están inscritos en una certificación.
+     *
+     * @param idCertificacion id de la certificación.
+     * @return cantidad de inscritos.
+     */
     @Override
     public int contarInscritos(String idCertificacion) {
         int count = 0;
@@ -382,7 +440,13 @@ public class Sistema implements SistemaIn {
         return count;
     }
 
-  
+    /**
+     * Analiza los cursos asociados a una certificación y retorna aquellos considerados "críticos"
+     * según un umbral de reprobación.
+     *
+     * @param idCertificacion id de la certificación.
+     * @return lista de cursos críticos.
+     */
     public ArrayList<Curso> obtenerAsignaturasCriticas(String idCertificacion) {
         ArrayList<Curso> criticas = new ArrayList<>();
 
@@ -418,7 +482,12 @@ public class Sistema implements SistemaIn {
         return criticas;
     }
 
-
+    /**
+     * Obtiene los perfiles de estudiantes inscritos en una certificación.
+     *
+     * @param idCertificacion id de la certificación.
+     * @return lista de estudiantes inscritos.
+     */
     @Override
     public ArrayList<Estudiante> obtenerPerfilesDeCertificacion(String idCertificacion) {
         ArrayList<Estudiante> lista = new ArrayList<>();
@@ -439,12 +508,24 @@ public class Sistema implements SistemaIn {
         }
         return null;
     }
-
+    
+    /**
+     * Obtiene el perfil de un estudiante por su RUT.
+     *
+     * @param rut rut del estudiante.
+     * @return estudiante encontrado o {@code null} si no existe.
+     */
     @Override
     public Estudiante getEstudiante(String rut) {
         return buscarEstudiantePorRUT(rut);
     }
-
+    
+    /**
+     * Obtiene todas las notas asociadas a un estudiante.
+     *
+     * @param rut rut del estudiante.
+     * @return lista de notas del estudiante.
+     */
     @Override
     public ArrayList<Nota> getNotasEstudiante(String rut) {
         ArrayList<Nota> lista = new ArrayList<>();
@@ -453,20 +534,40 @@ public class Sistema implements SistemaIn {
         }
         return lista;
     }
-
+    
+    /**
+     * Retorna la malla completa para un estudiante.
+     * En esta implementación se retorna la lista general de cursos.
+     *
+     * @param rut rut del estudiante.
+     * @return lista de cursos de la malla.
+     */
     @Override
     public ArrayList<Curso> getMallaCompleta(String rut) {
         // Si todos tienen misma malla, puedes devolver cursos tal cual
         return cursos;
     }
-
+    
+    /**
+     * Retorna las asignaturas pendientes de un estudiante.
+     * (Método disponible para implementar la lógica de pendientes).
+     *
+     * @param rut rut del estudiante.
+     * @return lista de cursos pendientes.
+     */
     @Override
     public ArrayList<Curso> getAsignaturasPendientes(String rut) {
         ArrayList<Curso> pendientes = new ArrayList<>();
         // Aquí puedes implementar: cursos no aprobados aún
         return pendientes;
     }
-
+    
+    /**
+     * Calcula el promedio general de un estudiante usando todas sus notas registradas.
+     *
+     * @param rut rut del estudiante.
+     * @return promedio general, o 0 si no tiene notas.
+     */
     @Override
     public double calcularPromedioGeneral(String rut) {
         double suma = 0;
@@ -480,7 +581,13 @@ public class Sistema implements SistemaIn {
         return count == 0 ? 0 : suma / count;
     }
 
-   
+    /**
+     * Calcula el promedio de un estudiante para un semestre específico.
+     *
+     * @param rut rut del estudiante.
+     * @param semestre semestre a evaluar (por ejemplo 1 o 2).
+     * @return promedio del semestre, o 0 si no hay notas en ese semestre.
+     */
     @Override
     public double calcularPromedioSemestre(String rut, int semestreBuscado) {
         double suma = 0;
@@ -518,7 +625,13 @@ public class Sistema implements SistemaIn {
     }
 
 
-
+    /**
+     * Inscribe a un estudiante en una certificación creando un nuevo registro.
+     *
+     * @param rut rut del estudiante.
+     * @param idCertificacion id de la certificación.
+     * @return {@code true} si se agregó el registro; {@code false} en caso contrario.
+     */
     @Override
     public boolean inscribirCertificacion(String rut, String idCertificacion) {
         // Podrías validar verificarRequisitos(rut, idCertificacion) antes
@@ -526,7 +639,15 @@ public class Sistema implements SistemaIn {
                 rut, idCertificacion, "2024-12-05", "Activa", 0.0);
         return registros.add(r);
     }
-
+    
+    /**
+     * Verifica si un estudiante cumple los requisitos académicos para una certificación.
+     * En esta implementación se valida que tenga aprobadas (nota >= 4.0) todas las asignaturas requeridas.
+     *
+     * @param rut rut del estudiante.
+     * @param idCertificacion id de la certificación.
+     * @return {@code true} si cumple requisitos; {@code false} si no cumple.
+     */
     @Override
     public boolean verificarRequisitos(String rut, String idCertificacion) {
 
@@ -565,7 +686,13 @@ public class Sistema implements SistemaIn {
         // Si todos los ramos requeridos están aprobados → cumple requisitos
         return true;
     }
-
+    
+    /**
+     * Obtiene las certificaciones en las que un estudiante está inscrito.
+     *
+     * @param rut rut del estudiante.
+     * @return lista de registros de certificación del estudiante.
+     */
     @Override
     public ArrayList<RegistroCertificacion> getCertificacionesInscritas(String rut) {
         ArrayList<RegistroCertificacion> lista = new ArrayList<>();
@@ -584,6 +711,15 @@ public class Sistema implements SistemaIn {
     }
  // Devuelve la lista de cursos que le faltan al estudiante
  // para poder inscribir la certificación.
+   
+    /**
+     * Retorna los cursos que el estudiante aún no ha aprobado y que son requeridos
+     * para inscribir o completar una certificación.
+     *
+     * @param rut rut del estudiante.
+     * @param idCertificacion id de la certificación.
+     * @return lista de cursos faltantes.
+     */   
  @Override
  public ArrayList<Curso> getRamosFaltantesCertificacion(String rut, String idCertificacion) {
 
